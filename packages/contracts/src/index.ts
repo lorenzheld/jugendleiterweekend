@@ -1,0 +1,12 @@
+/**
+ * @jlw/contracts
+ * Shared Zod schemas & TypeScript types used by both frontend and backend.
+ */
+
+export * from "./schemas/auth.js";
+export * from "./schemas/player.js";
+export * from "./schemas/world.js";
+export * from "./schemas/quest.js";
+export * from "./schemas/combat.js";
+export * from "./schemas/economy.js";
+export * from "./schemas/media.js";

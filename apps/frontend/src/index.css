@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* MapLibre GL CSS */
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+:root {
+  --color-bg: #1a1a2e;
+  --color-parchment: #f4e4c1;
+  --color-bronze: #cd7f32;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-parchment);
+  font-family: Georgia, Cambria, "Times New Roman", serif;
+  /* Prevent rubber-band scroll on iOS */
+  overscroll-behavior: none;
+}
