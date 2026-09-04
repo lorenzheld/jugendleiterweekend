@@ -14,6 +14,7 @@ import { combatRoutes } from "./modules/combat/combat.routes.js";
 import { economyRoutes } from "./modules/economy/economy.routes.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
 import { errorHandler } from "./plugins/error-handler.js";
+import "./types/fastify.js";
 
 const HOST = process.env["HOST"] ?? "0.0.0.0";
 const PORT = Number(process.env["PORT"] ?? 3000);
@@ -31,6 +32,18 @@ await server.register(jwtPlugin, {
   secret: process.env["JWT_SECRET"] ?? "changeme-dev-secret",
 });
 await server.register(websocketPlugin);
+
+// ── Authenticate decorator (used as preHandler in protected routes) ────────
+server.decorate(
+  "authenticate",
+  async function (request: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
+    try {
+      await request.jwtVerify();
+    } catch (err) {
+      void reply.send(err);
+    }
+  },
+);
 
 // ── Error handler ─────────────────────────────────────────────────────────────
 server.setErrorHandler(errorHandler);
