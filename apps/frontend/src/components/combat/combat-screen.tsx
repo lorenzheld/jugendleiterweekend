@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { X, Sword, Shield, Zap, Run } from "lucide-react";
+import { X, Sword, Shield, Zap, ArrowRight } from "lucide-react";
 import type {
   CombatInstance,
   CombatLog,
@@ -60,7 +60,7 @@ export function CombatScreen({
 
   // Auto-select first enemy if none selected
   useEffect(() => {
-    if (!selectedTarget && enemies.length > 0) {
+    if (!selectedTarget && enemies.length > 0 && enemies[0]) {
       setSelectedTarget(enemies[0].id);
     }
   }, [selectedTarget, enemies]);
@@ -205,7 +205,7 @@ export function CombatScreen({
               disabled={isActionDisabled || combat.type === "PVP"}
               className="flex flex-col items-center justify-center p-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 disabled:opacity-50"
             >
-              <Run className="w-6 h-6 text-white" />
+              <ArrowRight className="w-6 h-6 text-white" />
               <span className="text-xs text-white mt-1">Flee</span>
             </button>
           </div>

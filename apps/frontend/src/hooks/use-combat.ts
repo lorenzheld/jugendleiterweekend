@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { randomUUID } from "crypto";
 import type {
   CombatInstance,
   CombatLog,
@@ -55,7 +54,7 @@ export function useCombat(playerId: string, token?: string) {
     async (actionType: ActionType, targetId?: string) => {
       if (!activeCombat || !token) return;
 
-      const idempotencyKey = randomUUID();
+      const idempotencyKey = crypto.randomUUID();
 
       try {
         const res = await fetch(

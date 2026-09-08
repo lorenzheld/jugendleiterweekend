@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { AlertTriangle, Run } from "lucide-react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 
 interface PvPChallengeWarningProps {
   challengeId: string;
@@ -115,7 +115,7 @@ export function PvPChallengeWarning({
             onClick={onEscape}
             className="w-full py-3 rounded-lg bg-yellow-600 hover:bg-yellow-700 flex items-center justify-center gap-2 text-white font-semibold"
           >
-            <Run className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5" />
             <span>Keep Running!</span>
           </button>
         )}
