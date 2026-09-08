@@ -187,8 +187,35 @@ async function buildQuestRunDetail(
       return !o.progress || o.progress.status === "PENDING";
     }) ?? null;
 
+  // For REACH_LOCATION steps, enrich with the target WorldObject's name + coords
+  // so the frontend can display navigation hints and a map marker.
+  async function enrichWithTarget<T extends { stepActionType: string; targetRef: string }>(
+    step: T,
+  ): Promise<T & { targetObjectName?: string | null; targetLat?: number | null; targetLng?: number | null }> {
+    if (step.stepActionType !== "REACH_LOCATION") return step;
+    const wo = await lookupWorldObjectByTargetRef(step.targetRef);
+    return {
+      ...step,
+      targetObjectName: wo?.name ?? null,
+      targetLat: wo?.lat ?? null,
+      targetLng: wo?.lng ?? null,
+    };
+  }
+
   const toIso = (v: unknown): string =>
     v instanceof Date ? v.toISOString() : String(v);
+
+  const enrichedCurrentStep = currentStep ? await enrichWithTarget({
+    id: currentStep.id,
+    stepId: currentStep.stepId,
+    sequence: currentStep.sequence,
+    flowPhase: currentStep.flowPhase,
+    stepActionType: currentStep.stepActionType,
+    stepCategory: currentStep.stepCategory,
+    gddObjectiveType: currentStep.gddObjectiveType,
+    targetRef: currentStep.targetRef,
+    required: currentStep.required,
+  }) : null;
 
   return {
     id: run.id,
@@ -200,19 +227,7 @@ async function buildQuestRunDetail(
     questTitle: run.questTitle,
     questType: run.questType as QuestRunDetail["questType"],
     questDay: run.questDay,
-    currentStep: currentStep
-      ? {
-          id: currentStep.id,
-          stepId: currentStep.stepId,
-          sequence: currentStep.sequence,
-          flowPhase: currentStep.flowPhase,
-          stepActionType: currentStep.stepActionType,
-          stepCategory: currentStep.stepCategory,
-          gddObjectiveType: currentStep.gddObjectiveType,
-          targetRef: currentStep.targetRef,
-          required: currentStep.required,
-        }
-      : null,
+    currentStep: enrichedCurrentStep,
     objectives,
   };
 }

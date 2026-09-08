@@ -420,6 +420,16 @@ function ActiveView({
           {/* REACH_LOCATION */}
           {step.stepActionType === "REACH_LOCATION" && (
             <div className="flex flex-col gap-2">
+              {/* Target location name */}
+              {step.targetObjectName && (
+                <div className="flex items-center gap-2 rounded-lg bg-[#cd7f32]/10 border border-[#cd7f32]/30 px-3 py-2">
+                  <span className="text-base">🗺</span>
+                  <div>
+                    <p className="text-xs text-white/50">Zielort</p>
+                    <p className="text-sm font-semibold text-[#f4e4c1]">{step.targetObjectName}</p>
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-white/50">
                 GPS: {playerLat != null ? `${playerLat.toFixed(5)}, ${playerLng?.toFixed(5)}` : "wird ermittelt…"}{" "}
                 {playerAccuracy != null && `(±${Math.round(playerAccuracy)} m)`}

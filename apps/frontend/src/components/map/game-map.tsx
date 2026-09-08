@@ -266,6 +266,31 @@ export function GameMap({ onBack }: GameMapProps) {
           <WorldObjectMarker key={obj.id} object={obj} />
         ))}
 
+        {/* ── Quest waypoint markers (REACH_LOCATION targets) ───────────── */}
+        {activeRuns
+          .filter(
+            (r) =>
+              r.currentStep?.stepActionType === "REACH_LOCATION" &&
+              r.currentStep.targetLat != null &&
+              r.currentStep.targetLng != null,
+          )
+          .map((r) => (
+            <Marker
+              key={`quest-wp-${r.id}`}
+              latitude={r.currentStep!.targetLat!}
+              longitude={r.currentStep!.targetLng!}
+              anchor="bottom"
+            >
+              <div className="flex flex-col items-center">
+                <div className="rounded-full bg-[#cd7f32] border-2 border-white shadow-lg px-2 py-0.5 text-[10px] font-bold text-[#1a1a2e] whitespace-nowrap max-w-[120px] truncate">
+                  🎯 {r.currentStep!.targetObjectName ?? "Ziel"}
+                </div>
+                <div className="w-0.5 h-2 bg-[#cd7f32]" />
+                <div className="w-2 h-2 rounded-full bg-[#cd7f32] border border-white" />
+              </div>
+            </Marker>
+          ))}
+
         {/* ── Player marker ─────────────────────────────────────────────── */}
         {position && (
           <Marker

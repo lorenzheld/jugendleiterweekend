@@ -73,6 +73,15 @@ export const QuestStepSchema = z.object({
   gddObjectiveType: z.string().nullable(),
   targetRef: z.string(),
   required: z.boolean(),
+  /**
+   * Human-readable name of the target WorldObject (only present for
+   * REACH_LOCATION steps where a physical location must be visited).
+   */
+  targetObjectName: z.string().nullable().optional(),
+  /** Latitude of the target WorldObject (REACH_LOCATION steps only). */
+  targetLat: z.number().nullable().optional(),
+  /** Longitude of the target WorldObject (REACH_LOCATION steps only). */
+  targetLng: z.number().nullable().optional(),
 });
 export type QuestStep = z.infer<typeof QuestStepSchema>;
 
