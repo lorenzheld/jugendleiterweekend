@@ -10,3 +10,5 @@ export * from "./schemas/quest.js";
 export * from "./schemas/combat.js";
 export * from "./schemas/economy.js";
 export * from "./schemas/media.js";
+export * from "./schemas/geo.js";
+export * from "./schemas/geojson.js";

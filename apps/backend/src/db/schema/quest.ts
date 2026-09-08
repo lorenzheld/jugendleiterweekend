@@ -6,8 +6,13 @@ import {
   timestamp,
   integer,
   text,
+  boolean,
+  unique,
 } from "drizzle-orm/pg-core";
 import { teams } from "./player.js";
+import { worldObjects } from "./world.js";
+
+// ── Enums ──────────────────────────────────────────────────────────────────────
 
 export const questTypeEnum = pgEnum("quest_type", [
   "REGULAR",
@@ -23,12 +28,75 @@ export const questRunStateEnum = pgEnum("quest_run_state", [
   "FAILED",
 ]);
 
+/**
+ * Flow phase of a quest step (maps directly to GeoJSON `flow_phase` values).
+ *
+ * DISCOVER        → NPC / location appears on the map for the first time
+ * DIALOGUE        → conversation / offer screen opens
+ * ACCEPT          → team explicitly accepts the quest
+ * OBJECTIVE       → playable objectives (travel, answer, fight …)
+ * BONUS_OBJECTIVE → optional objective that awards a bonus
+ * COMPLETE        → handover / completion confirmation
+ */
+export const flowPhaseEnum = pgEnum("flow_phase", [
+  "DISCOVER",
+  "DIALOGUE",
+  "ACCEPT",
+  "OBJECTIVE",
+  "BONUS_OBJECTIVE",
+  "COMPLETE",
+]);
+
+/**
+ * The concrete action the player must perform for a step.
+ * Maps to the GeoJSON `step_action_type` values used in v0.8.
+ */
+export const stepActionTypeEnum = pgEnum("step_action_type", [
+  "REACH_LOCATION",
+  "ANSWER_QUESTION",
+  "SOLVE_PUZZLE",
+  "DEFEAT_ENEMY",
+  "DISCOVER_NPC",
+  "TALK_TO_NPC",
+  "ACCEPT_QUEST",
+  "UPLOAD_MEDIA",
+  "USE_ITEM",
+  "CLASS_ACTION",
+  "TEAM_DECISION",
+  // Catch-all for future action types introduced before a migration.
+  "OTHER",
+]);
+
+// ── QuestDefinition ───────────────────────────────────────────────────────────
+
+/**
+ * Seeded from GeoJSON `quest_definition` features.
+ * `external_id` is the GeoJSON quest_id (e.g. "D1-Q09").
+ */
 export const questDefinitions = pgTable("quest_definition", {
   id: uuid("id").primaryKey().defaultRandom(),
+
+  /**
+   * Natural key from the GeoJSON Feature.id field (e.g. "quest:D1-Q01")
+   * or the properties.quest_id value when used as a FK target.
+   * Used for idempotent upsert.
+   */
+  externalId: varchar("external_id", { length: 64 }).unique().notNull(),
+
   title: varchar("title", { length: 128 }).notNull(),
   type: questTypeEnum("type").notNull(),
+
+  /** Which game day this quest belongs to (e.g. "DAY_1", "DAY_2"). */
+  day: varchar("day", { length: 16 }),
+
+  /**
+   * Serialised JSON blob of additional GeoJSON properties
+   * (story_conflict, dramatic_arc, ordered_candidate_ids, …).
+   */
   contentJson: text("content_json").notNull().default("{}"),
 });
+
+// ── QuestRun ──────────────────────────────────────────────────────────────────
 
 export const questRuns = pgTable("quest_run", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -44,6 +112,8 @@ export const questRuns = pgTable("quest_run", {
     .defaultNow(),
 });
 
+// ── ObjectiveProgress ─────────────────────────────────────────────────────────
+
 export const objectiveProgress = pgTable("objective_progress", {
   id: uuid("id").primaryKey().defaultRandom(),
   questRunId: uuid("quest_run_id")
@@ -53,3 +123,129 @@ export const objectiveProgress = pgTable("objective_progress", {
   status: varchar("status", { length: 32 }).notNull().default("PENDING"),
   progressCount: integer("progress_count").notNull().default(0),
 });
+
+// ── QuestStep ─────────────────────────────────────────────────────────────────
+
+/**
+ * A single step within a QuestDefinition.
+ * Seeded from the `quest_step_refs` arrays inside GeoJSON `location_candidate`
+ * features; `step_id` acts as the idempotent natural key.
+ *
+ * A step's location is referenced via `targetRef` (a WorldObject.externalId or
+ * QuestDefinition.externalId string), not a hard FK, because some target types
+ * are resolved at runtime.
+ */
+export const questSteps = pgTable("quest_step", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  questDefinitionId: uuid("quest_definition_id")
+    .notNull()
+    .references(() => questDefinitions.id, { onDelete: "cascade" }),
+
+  /**
+   * External step identifier from GeoJSON (e.g. "D1-Q09-S05").
+   * Unique across the entire dataset.
+   */
+  stepId: varchar("step_id", { length: 64 }).unique().notNull(),
+
+  /** Position of this step within its quest (1-based). */
+  sequence: integer("sequence").notNull(),
+
+  flowPhase: flowPhaseEnum("flow_phase").notNull(),
+
+  /**
+   * The concrete action required.
+   * Unknown future values are stored as "OTHER".
+   */
+  stepActionType: stepActionTypeEnum("step_action_type").notNull(),
+
+  /**
+   * High-level category:
+   *   FLOW_ACTION → structural step (DISCOVER, ACCEPT …); no score impact
+   *   OBJECTIVE   → scored / progressive step
+   */
+  stepCategory: varchar("step_category", { length: 32 }).notNull(),
+
+  /**
+   * GDD objective type (e.g. "REACH_LOCATION", "SUBMIT_ANSWER").
+   * Null for pure flow actions.
+   */
+  gddObjectiveType: varchar("gdd_objective_type", { length: 64 }),
+
+  /**
+   * Opaque string reference to the target entity:
+   *   - WorldObject.externalId  (e.g. "place_day_1_acquedotto_vergine")
+   *   - QuestDefinition.externalId (e.g. "H-D1-02")
+   *   - NPC / puzzle / item ref (e.g. "npc_rattus_virgo", "PZ-D1-Q09")
+   */
+  targetRef: varchar("target_ref", { length: 128 }).notNull(),
+
+  /** Whether completing this step is mandatory for quest completion. */
+  required: boolean("required").notNull().default(true),
+});
+
+// ── QuestStation ──────────────────────────────────────────────────────────────
+
+/**
+ * A spatial puzzle station at a WorldObject location within a quest.
+ * Seeded from the `quest_stations` arrays inside GeoJSON `location_candidate`
+ * features.
+ *
+ * One WorldObject can host stations for multiple different quests;
+ * the composite (worldObjectId, questDefinitionId, sequence) is the natural key.
+ */
+export const questStations = pgTable("quest_station", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  worldObjectId: uuid("world_object_id")
+    .notNull()
+    .references(() => worldObjects.id, { onDelete: "cascade" }),
+
+  questDefinitionId: uuid("quest_definition_id")
+    .notNull()
+    .references(() => questDefinitions.id, { onDelete: "cascade" }),
+
+  /**
+   * Position of this station within the quest's ordered location chain.
+   * Corresponds to the GeoJSON `quest_station.sequence` field.
+   */
+  sequence: integer("sequence").notNull(),
+
+  /**
+   * Role of this station in the quest narrative.
+   * E.g. "START / ERSTER HINWEIS", "ZWISCHENSTATION", "ABSCHLUSS".
+   */
+  role: varchar("role", { length: 64 }).notNull(),
+
+  /** What players should observe at this location. */
+  observableEvidence: text("observable_evidence"),
+
+  /** The question players must answer at this station. */
+  locationQuestion: text("location_question"),
+
+  /** Expected / model answer. */
+  expectedAnswer: text("expected_answer"),
+
+  /**
+   * GM fallback note if the location is inaccessible on the day
+   * (e.g. maintenance, closures).
+   */
+  accessFallbackNote: text("access_fallback_note"),
+
+  /**
+   * Optional name of the enemy encounter triggered here.
+   * Matches enemy_encounter.properties.name in the GeoJSON.
+   */
+  enemyHook: varchar("enemy_hook", { length: 128 }),
+},
+(table) => [
+  /**
+   * Natural composite key: one WorldObject can host exactly one station
+   * per (quest, sequence) combination. Used for idempotent ON CONFLICT upserts.
+   */
+  unique("uq_quest_station_wo_qd_seq").on(
+    table.worldObjectId,
+    table.questDefinitionId,
+    table.sequence,
+  ),
+]);
