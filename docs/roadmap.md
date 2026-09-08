@@ -88,12 +88,23 @@ Diese isolierten, chronologischen Epics sind so strukturiert, dass sie in vertik
 
 ---
 
-### Epic 7: Realtime & Offline-Resilienz
+### Epic 7: Realtime & Offline-Resilienz ✅ **COMPLETED**
 *Ziel: Stabile Verbindung und fehlertolerante Echtzeit-Synchronisation.*
 
-*   *WebSockets:* Integration für Live-State (Combat-Runden, Team-Updates, QuestStep-Fortschritt, PvP-Warnungen).
-*   *Resilienz:* Reconnect-Logik (Abrufen fehlender Events, Wiederherstellen von Combat-Locks und Dialog-Knoten nach Verbindungsabbruch).
-*   *Caching:* PWA Service-Worker finalisieren (Caching von ~200 MB statischen Assets, Audio-Sprites, Bilder, Karten-Tiles).
+*   ✅ *WebSockets:* Integration für Live-State (Combat-Runden, Team-Updates, QuestStep-Fortschritt, PvP-Warnungen).
+    *   WebSocket-Hub mit automatischem Ping/Pong (25s Intervall)
+    *   Event-Logging für Client-Recovery (5-Minuten-Fenster)
+    *   TypeScript-sichere Event-Subscriptions
+*   ✅ *Resilienz:* Reconnect-Logik (Abrufen fehlender Events, Wiederherstellen von Combat-Locks und Dialog-Knoten nach Verbindungsabbruch).
+    *   Exponential Backoff (1s → 30s)
+    *   Event-Queue für Offline-Perioden (max. 100 Events)
+    *   Recovery-Endpoint: `GET /api/v1/ws/events?since=<timestamp>`
+    *   State-Recovery-Hook für Combat/Quest/Team
+*   ✅ *Caching:* PWA Service-Worker finalisieren (Caching von ~200 MB statischen Assets, Audio-Sprites, Bilder, Karten-Tiles).
+    *   Erweiterte Glob-Patterns für alle Asset-Typen
+    *   Größenlimit 50 MB pro Asset
+    *   Cache-First für Tiles/Audio, Network-First für API
+*   📚 **Dokumentation:** [epic7-realtime-offline.md](./epic7-realtime-offline.md), [REALTIME_QUICKSTART.md](./REALTIME_QUICKSTART.md)
 
 ---
 

@@ -11,6 +11,8 @@
 
 import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/auth.context.js";
+import { WebSocketProvider } from "./contexts/websocket.context.js";
+import { ConnectionIndicator } from "./components/common/connection-indicator.js";
 import { LoginPage } from "./pages/login.page.js";
 import { LobbyPage } from "./pages/lobby.page.js";
 import { GameMap } from "./components/map/game-map.js";
@@ -50,23 +52,39 @@ function AppShell() {
     setScreen("lobby");
   }
 
+  // Render current screen with connection indicator
+  let content: JSX.Element;
+
   switch (screen) {
     case "login":
-      return <LoginPage />;
+      content = <LoginPage />;
+      break;
 
     case "lobby":
       if (!isAuthenticated) {
         // Guard: should not happen, but be defensive
-        return <LoginPage />;
+        content = <LoginPage />;
+      } else {
+        content = <LobbyPage onEnterMap={handleEnterMap} />;
       }
-      return <LobbyPage onEnterMap={handleEnterMap} />;
+      break;
 
     case "map":
       if (!isAuthenticated) {
-        return <LoginPage />;
+        content = <LoginPage />;
+      } else {
+        content = <GameMap onBack={handleBackToLobby} />;
       }
-      return <GameMap onBack={handleBackToLobby} />;
+      break;
   }
+
+  return (
+    <>
+      {content}
+      {/* Show connection indicator when authenticated */}
+      {isAuthenticated && <ConnectionIndicator position="top-right" />}
+    </>
+  );
 }
 
 // ── Root export ───────────────────────────────────────────────────────────────
@@ -74,7 +92,9 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppShell />
+      <WebSocketProvider debug={import.meta.env.DEV}>
+        <AppShell />
+      </WebSocketProvider>
     </AuthProvider>
   );
 }

@@ -29,13 +29,65 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,mp3,ogg}"],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB per asset
+        // Epic 7: Extended caching for ~200 MB of assets
+        globPatterns: [
+          "**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}",
+          "**/*.{mp3,ogg,wav,m4a}", // Audio files
+          "**/*.{json,geojson}", // Map tiles and data
+        ],
+        // Allow larger individual assets (up to 50 MB per file)
+        maximumFileSizeToCacheInBytes: 50 * 1024 * 1024,
+        
+        // Runtime caching strategies
         runtimeCaching: [
+          // API calls: Network-first (fresh data preferred)
           {
             urlPattern: /\/api\/v1\//,
             handler: "NetworkFirst",
-            options: { cacheName: "api-cache" },
+            options: {
+              cacheName: "api-cache",
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 5 * 60, // 5 minutes
+              },
+            },
+          },
+          // Map tiles: Cache-first (static, rarely change)
+          {
+            urlPattern: /\.(png|jpg|jpeg|svg|webp)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "map-tiles-cache",
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+              },
+            },
+          },
+          // Audio: Cache-first (large, static files)
+          {
+            urlPattern: /\.(mp3|ogg|wav|m4a)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "audio-cache",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+              },
+            },
+          },
+          // Fonts: Cache-first
+          {
+            urlPattern: /\.(woff|woff2|ttf|eot)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "fonts-cache",
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+              },
+            },
           },
         ],
       },

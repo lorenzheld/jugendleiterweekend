@@ -9,3 +9,4 @@ export * from "./combat.js";
 export * from "./economy_v2.js";
 export * from "./media.js";
 export * from "./proximity.js";
+export * from "./ws_event_log.js";

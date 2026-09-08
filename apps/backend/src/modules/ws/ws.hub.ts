@@ -19,6 +19,8 @@
 import type { WebSocket } from "@fastify/websocket";
 import type { FastifyBaseLogger } from "fastify";
 import type { RadiusEvent } from "@jlw/contracts";
+import { db } from "../../db/client.js";
+import { wsEventLog } from "../../db/schema/index.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -91,8 +93,9 @@ export class WsHub {
    * without being tied to the RadiusEvent shape.
    *
    * Silently skips sockets that are no longer OPEN.
+   * Persists event to the log for client recovery.
    */
-  sendToTeam<T>(teamId: string, event: T): void {
+  sendToTeam<T extends { event: string }>(teamId: string, event: T): void {
     const room = this.rooms.get(teamId);
     if (!room || room.size === 0) return;
 
@@ -106,12 +109,16 @@ export class WsHub {
       }
     }
 
+    // Persist to event log for recovery (async, fire-and-forget)
+    void this.logEvent(teamId, event);
+
     this.logger.debug({ teamId, sent }, "ws: sendToTeam");
   }
 
   /**
    * Send a RadiusEvent to all connected members of a team.
    * Silently skips sockets that are no longer OPEN.
+   * Persists event to the log for client recovery.
    */
   broadcastToTeam(teamId: string, event: RadiusEvent): void {
     const room = this.rooms.get(teamId);
@@ -126,6 +133,9 @@ export class WsHub {
         sent++;
       }
     }
+
+    // Persist to event log for recovery (async, fire-and-forget)
+    void this.logEvent(teamId, event);
 
     this.logger.debug(
       { teamId, event: event.event, sent, roomSize: room.size },
@@ -200,6 +210,24 @@ export class WsHub {
     if (this.pingTimer) {
       clearInterval(this.pingTimer);
       this.pingTimer = null;
+    }
+  }
+
+  // ── Event Logging (for client recovery) ───────────────────────────────────────
+
+  /**
+   * Persist an event to the log for client reconnection recovery.
+   * Events are pruned by the separate WsEventCleanup job.
+   */
+  private async logEvent(teamId: string, event: { event: string }): Promise<void> {
+    try {
+      await db.insert(wsEventLog).values({
+        teamId,
+        eventType: event.event,
+        payload: event,
+      });
+    } catch (error) {
+      this.logger.warn({ error, teamId, event: event.event }, "Failed to log event");
     }
   }
 }

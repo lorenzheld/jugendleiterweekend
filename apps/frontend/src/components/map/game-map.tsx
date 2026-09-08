@@ -40,6 +40,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useGeolocation } from "../../hooks/use-geolocation.js";
 import { useWorldObjects } from "../../hooks/use-world-objects.js";
+import { useStateRecovery } from "../../hooks/use-state-recovery.js";
 import { useAuth } from "../../contexts/auth.context.js";
 import { api } from "../../lib/api.js";
 import { WorldObjectMarker } from "./world-object-marker.js";
@@ -106,6 +107,15 @@ interface GameMapProps {
 export function GameMap({ onBack }: GameMapProps) {
   const { profile, token } = useAuth();
   const { position, error: geoError, isReady } = useGeolocation();
+  
+  // ── State Recovery (Epic 7) ───────────────────────────────────────────────
+  // Automatically recovers combat/quest state after reconnection
+  useStateRecovery({
+    debug: import.meta.env.DEV,
+    onRecoveryComplete: () => {
+      console.log("[GameMap] State recovery completed");
+    },
+  });
 
   // ── WorldObjects (nearby markers) ─────────────────────────────────────────
   const { worldObjects, wsStatus } = useWorldObjects(token, position);

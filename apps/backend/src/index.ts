@@ -14,8 +14,10 @@ import { combatRoutes } from "./modules/combat/combat.routes.js";
 import { economyRoutes } from "./modules/economy/economy.routes.js";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
+import { wsRoutes } from "./modules/ws/ws.routes.js";
 import { errorHandler } from "./plugins/error-handler.js";
 import { WsHub } from "./modules/ws/ws.hub.js";
+import { WsEventCleanup } from "./modules/ws/ws.cleanup.js";
 
 const HOST = process.env["HOST"] ?? "0.0.0.0";
 const PORT = Number(process.env["PORT"] ?? 3000);
@@ -46,13 +48,18 @@ server.decorate(
   },
 );
 
-// ── WebSocket Hub (Epic 2) ─────────────────────────────────────────────────
+// ── WebSocket Hub (Epic 2 + Epic 7) ───────────────────────────────────────
 const wsHub = new WsHub(server.log);
 server.decorate("wsHub", wsHub);
 
-// Clean up hub on server close
+// Start event log cleanup job (Epic 7)
+const wsCleanup = new WsEventCleanup(server.log);
+wsCleanup.start();
+
+// Clean up on server close
 server.addHook("onClose", () => {
   wsHub.destroy();
+  wsCleanup.stop();
 });
 
 // ── Body parsers ──────────────────────────────────────────────────────────────
@@ -93,6 +100,7 @@ await server.register(combatRoutes, { prefix: "/api/v1/combat" });
 await server.register(economyRoutes, { prefix: "/api/v1/economy" });
 await server.register(inventoryRoutes, { prefix: "/api/v1/inventory" });
 await server.register(mediaRoutes, { prefix: "/api/v1/media" });
+await server.register(wsRoutes, { prefix: "/api/v1/ws" });
 
 // ── Health check ──────────────────────────────────────────────────────────────
 server.get("/health", async () => ({ status: "ok" }));

@@ -16,7 +16,8 @@
     "db:seed": "tsx scripts/seed-test-account.ts",
     "seed": "tsx scripts/seed.ts",
     "seed:dev": "cross-env SEED_SKIP_FILTER=true tsx scripts/seed.ts",
-    "test:epic5": "tsx scripts/test-epic5.ts"
+    "test:epic5": "tsx scripts/test-epic5.ts",
+    "test:ws": "tsx scripts/test-websocket.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
@@ -33,9 +34,11 @@
   "devDependencies": {
     "@types/node": "^20.14.14",
     "@types/pg": "^8.11.6",
+    "@types/ws": "^8.5.12",
     "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.16.5",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "ws": "^8.18.0"
   }
 }

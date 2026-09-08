@@ -1,9 +1,15 @@
 /**
- * Combat Hook (Epic 6)
+ * Combat Hook (Epic 6 + Epic 7)
  * Manages combat state, WebSocket events, and API calls.
+ * 
+ * Epic 7 enhancements:
+ *   - Real-time WebSocket integration for combat events
+ *   - Automatic state sync when combat events are received
+ *   - No polling – events are pushed from server
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useWsEvent } from "../contexts/websocket.context.js";
 import type {
   CombatInstance,
   CombatLog,
@@ -87,39 +93,45 @@ export function useCombat(playerId: string, token?: string) {
     [activeCombat, token, fetchActiveCombat]
   );
 
-  // Listen to WebSocket events
-  useEffect(() => {
-    if (!token) return;
+  // ── WebSocket Event Handlers (Epic 7) ──────────────────────────────────────
 
-    // TODO: Implement WebSocket connection and event listeners
-    // For now, poll active combat every 5 seconds
-    const interval = setInterval(() => {
-      void fetchActiveCombat();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [token, fetchActiveCombat]);
-
-  // Handle WebSocket events
-  const handleCombatStarted = useCallback((event: CombatStartedEvent) => {
+  // Combat Started: Fetch full combat state
+  useWsEvent("combat:started", useCallback((event: CombatStartedEvent) => {
+    console.log("[Combat] Combat started:", event);
     void fetchActiveCombat();
-  }, [fetchActiveCombat]);
+  }, [fetchActiveCombat]));
 
-  const handleRoundResolved = useCallback((event: CombatRoundResolvedEvent) => {
-    setLogs((prev) => [...prev, ...event.data.logs]);
+  // Combat Round Resolved: Update logs and state
+  useWsEvent("combat:round_resolved", useCallback((event: CombatRoundResolvedEvent) => {
+    console.log("[Combat] Round resolved:", event);
+    if (event.data.logs) {
+      setLogs((prev) => [...prev, ...event.data.logs]);
+    }
     void fetchActiveCombat();
-  }, [fetchActiveCombat]);
+  }, [fetchActiveCombat]));
 
-  const handleCombatCompleted = useCallback((event: CombatCompletedEvent) => {
-    setLogs((prev) => [...prev, ...event.data.logs]);
+  // Combat Completed: Update logs, refresh state, clear after delay
+  useWsEvent("combat:completed", useCallback((event: CombatCompletedEvent) => {
+    console.log("[Combat] Combat ended:", event);
+    if (event.data.logs) {
+      setLogs((prev) => [...prev, ...event.data.logs]);
+    }
     void fetchActiveCombat();
 
-    // Clear combat after 3 seconds
+    // Clear combat UI after 3 seconds
     setTimeout(() => {
       setActiveCombat(null);
       setLogs([]);
     }, 3000);
-  }, [fetchActiveCombat]);
+  }, [fetchActiveCombat]));
+
+  // Initial fetch on mount
+  useEffect(() => {
+    if (token) {
+      void fetchActiveCombat();
+    }
+  }, [token, fetchActiveCombat]);
+
 
   return {
     activeCombat,
@@ -128,8 +140,5 @@ export function useCombat(playerId: string, token?: string) {
     error,
     submitAction,
     fetchActiveCombat,
-    handleCombatStarted,
-    handleRoundResolved,
-    handleCombatCompleted,
   };
 }

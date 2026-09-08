@@ -64,6 +64,13 @@
       "when": 1788933284007,
       "tag": "0008_epic5_trade_offers",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788933284008,
+      "tag": "0009_epic7_ws_event_log",
+      "breakpoints": true
     }
   ]
 }

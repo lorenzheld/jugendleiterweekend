@@ -12,3 +12,4 @@ export * from "./schemas/economy.js";
 export * from "./schemas/media.js";
 export * from "./schemas/geo.js";
 export * from "./schemas/geojson.js";
+export * from "./schemas/realtime.js";
