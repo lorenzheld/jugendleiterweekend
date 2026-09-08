@@ -8,3 +8,4 @@ export * from "./quest.js";
 export * from "./combat.js";
 export * from "./economy.js";
 export * from "./media.js";
+export * from "./proximity.js";

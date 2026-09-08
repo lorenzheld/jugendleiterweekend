@@ -44,3 +44,107 @@ export const DistanceCheckSchema = z.object({
   withinRange: z.boolean(),
 });
 export type DistanceCheck = z.infer<typeof DistanceCheckSchema>;
+
+// ── Proximity zone ────────────────────────────────────────────────────────────
+
+/**
+ * Spatial proximity zone a player can occupy relative to a WorldObject.
+ *
+ * OUTSIDE      → farther than discovery_radius_m
+ * DISCOVERED   → within discovery_radius_m; map marker visible
+ * INTERACTING  → within interaction_radius_m (or hysteresis), interaction active
+ * AGGRO        → within enemy_aggro_radius_m (ENEMY-type objects only)
+ * BOSS_JOIN    → within boss_join_radius_m = 30 m (BOSS-type objects only)
+ */
+export const ProximityZoneSchema = z.enum([
+  "OUTSIDE",
+  "DISCOVERED",
+  "INTERACTING",
+  "AGGRO",
+  "BOSS_JOIN",
+]);
+export type ProximityZone = z.infer<typeof ProximityZoneSchema>;
+
+// ── WorldObjectNearby ─────────────────────────────────────────────────────────
+
+/**
+ * Response shape for GET /api/v1/geo/world-objects.
+ * Returns WorldObjects within discovery_radius_m of the player, enriched
+ * with the current effective distance and proximity zone.
+ *
+ * Note: WorldObjectTypeSchema / WorldObjectType are defined in world.ts
+ * and re-exported from @jlw/contracts index; imported here for local use.
+ */
+import { WorldObjectTypeSchema } from "./world.js";
+
+export const WorldObjectNearbySchema = z.object({
+  id: z.string().uuid(),
+  externalId: z.string(),
+  type: WorldObjectTypeSchema,
+  name: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+  cluster: z.string().nullable(),
+  discoveryRadiusM: z.number().int().positive(),
+  interactionRadiusM: z.number().int().positive(),
+  exitHysteresisRadiusM: z.number().int().positive(),
+  aggroRadiusM: z.number().int().positive(),
+  /** Current computed zone for the requesting player. */
+  zone: ProximityZoneSchema,
+  /** Accuracy-adjusted distance in metres. */
+  effectiveDistanceM: z.number().nonnegative(),
+});
+export type WorldObjectNearby = z.infer<typeof WorldObjectNearbySchema>;
+
+/** Response wrapper for the world-objects endpoint. */
+export const WorldObjectsResponseSchema = z.object({
+  objects: z.array(WorldObjectNearbySchema),
+  playerLat: z.number(),
+  playerLng: z.number(),
+  accuracy: z.number(),
+});
+export type WorldObjectsResponse = z.infer<typeof WorldObjectsResponseSchema>;
+
+// ── WebSocket radius events ───────────────────────────────────────────────────
+
+/**
+ * Emitted to all team WebSocket clients when a player's proximity zone
+ * relative to a WorldObject changes.
+ *
+ * Direction: server → client (push only; clients don't send events back).
+ *
+ * Examples:
+ *   OUTSIDE → DISCOVERED   : show map marker
+ *   DISCOVERED → INTERACTING: unlock NPC dialog / quest accept button
+ *   OUTSIDE → AGGRO        : trigger PvE encounter warning
+ *   * → BOSS_JOIN          : open boss-join modal
+ *   INTERACTING → DISCOVERED: player walked away – deactivate interaction
+ */
+export const RadiusEventSchema = z.object({
+  event: z.literal("radius.transition"),
+  playerId: z.string().uuid(),
+  playerName: z.string(),
+  teamId: z.string().uuid(),
+  worldObjectId: z.string().uuid(),
+  worldObjectName: z.string(),
+  worldObjectType: WorldObjectTypeSchema,
+  previousZone: ProximityZoneSchema,
+  newZone: ProximityZoneSchema,
+  effectiveDistanceM: z.number(),
+  timestamp: z.string().datetime(),
+});
+export type RadiusEvent = z.infer<typeof RadiusEventSchema>;
+
+/**
+ * Emitted to confirm a successful WebSocket handshake.
+ * Carries the initial world-objects state so the client can bootstrap
+ * its map overlay without a separate HTTP request.
+ */
+export const WsConnectedEventSchema = z.object({
+  event: z.literal("ws.connected"),
+  playerId: z.string().uuid(),
+  teamId: z.string().uuid(),
+  nearbyObjects: z.array(WorldObjectNearbySchema),
+  timestamp: z.string().datetime(),
+});
+export type WsConnectedEvent = z.infer<typeof WsConnectedEventSchema>;

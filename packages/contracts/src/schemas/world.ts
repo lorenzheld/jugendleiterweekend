@@ -1,8 +1,9 @@
 import { z } from "zod";
 
 export const WorldObjectTypeSchema = z.enum([
-  "NPC",
+  "LOCATION",
   "ENEMY",
+  "NPC",
   "STORE",
   "BOSS",
   "SAFE_ZONE",

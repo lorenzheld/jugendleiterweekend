@@ -8,6 +8,13 @@
       "when": 1788846884650,
       "tag": "0000_slow_kang",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1757289600000,
+      "tag": "0001_epic2_geofencing",
+      "breakpoints": true
     }
   ]
 }

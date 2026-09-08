@@ -14,6 +14,7 @@ import { combatRoutes } from "./modules/combat/combat.routes.js";
 import { economyRoutes } from "./modules/economy/economy.routes.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
 import { errorHandler } from "./plugins/error-handler.js";
+import { WsHub } from "./modules/ws/ws.hub.js";
 
 const HOST = process.env["HOST"] ?? "0.0.0.0";
 const PORT = Number(process.env["PORT"] ?? 3000);
@@ -44,6 +45,15 @@ server.decorate(
   },
 );
 
+// ── WebSocket Hub (Epic 2) ─────────────────────────────────────────────────
+const wsHub = new WsHub(server.log);
+server.decorate("wsHub", wsHub);
+
+// Clean up hub on server close
+server.addHook("onClose", () => {
+  wsHub.destroy();
+});
+
 // ── Error handler ─────────────────────────────────────────────────────────────
 server.setErrorHandler(errorHandler);
 
@@ -57,6 +67,13 @@ await server.register(mediaRoutes, { prefix: "/api/v1/media" });
 
 // ── Health check ──────────────────────────────────────────────────────────────
 server.get("/health", async () => ({ status: "ok" }));
+
+// ── WebSocket diagnostics (dev / GM use) ──────────────────────────────────────
+server.get("/health/ws", async () => ({
+  status: "ok",
+  connections: server.wsHub.connectionCount,
+  rooms: server.wsHub.getRoomStats(),
+}));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 try {
