@@ -874,8 +874,9 @@ export async function submitAnswer(opts: {
   } else {
     // Virtual station ref (e.g. "OBS-D1-Q01-1"): parse trailing number as station sequence.
     const seqMatch = step.targetRef.match(/(\d+)$/);
-    if (seqMatch) {
-      const stationSeq = parseInt(seqMatch[1], 10);
+    const seqGroup = seqMatch?.[1];
+    if (seqGroup !== undefined) {
+      const stationSeq = parseInt(seqGroup, 10);
       [station] = await db
         .select({ expectedAnswer: questStations.expectedAnswer })
         .from(questStations)
