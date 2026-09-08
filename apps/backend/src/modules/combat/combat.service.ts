@@ -488,8 +488,9 @@ async function resolveRound(combatId: string, wsHub?: WsHub): Promise<CombatLog[
 
     if (action.actionType === "ATTACK" && action.targetId) {
       const targetMaybe = combat.combatants.find((c) => c.id === action.targetId);
+      if (!targetMaybe || targetMaybe.isDowned) continue;
+      
       const target = targetMaybe;
-      if (!target || target.isDowned) continue;
 
       // Calculate damage
       const damage = calculateDamage(actor, target);

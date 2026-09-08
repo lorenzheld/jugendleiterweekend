@@ -263,13 +263,22 @@ export async function updatePlayerLocation(opts: {
   // If a team enters AGGRO radius of an ENEMY and has an active DEFEAT_ENEMY quest step,
   // start a combat instance.
   if (changed.length > 0) {
-    await checkPvEEncounterTrigger({
-      playerId: player.id,
-      teamId: player.teamId,
-      transitions: changed,
-      nearbyObjects: nearbyAsSpatial,
-      wsHub,
-    });
+    if (wsHub) {
+      await checkPvEEncounterTrigger({
+        playerId: player.id,
+        teamId: player.teamId,
+        transitions: changed,
+        nearbyObjects: nearbyAsSpatial,
+        wsHub,
+      });
+    } else {
+      await checkPvEEncounterTrigger({
+        playerId: player.id,
+        teamId: player.teamId,
+        transitions: changed,
+        nearbyObjects: nearbyAsSpatial,
+      });
+    }
   }
 
   return {
@@ -567,11 +576,18 @@ async function checkPvEEncounterTrigger(opts: {
     if (matchingStep) {
       try {
         // Start PvE combat!
-        await startPvECombat({
-          teamId,
-          enemyWorldObjectId: enemy.id,
-          wsHub,
-        });
+        if (wsHub) {
+          await startPvECombat({
+            teamId,
+            enemyWorldObjectId: enemy.id,
+            wsHub,
+          });
+        } else {
+          await startPvECombat({
+            teamId,
+            enemyWorldObjectId: enemy.id,
+          });
+        }
 
         // Combat started successfully, no need to check other transitions
         return;
