@@ -18,7 +18,7 @@
 import { sql, eq, and, inArray } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { players } from "../../db/schema/player.js";
-import { worldObjects } from "../../db/schema/world.js";
+import { worldObjects, playAreas } from "../../db/schema/world.js";
 import { playerProximityStates } from "../../db/schema/proximity.js";
 import {
   evaluateZones,
@@ -31,6 +31,7 @@ import type {
   DistanceCheck,
   WorldObjectNearby,
   RadiusEvent,
+  PlayArea,
 } from "@jlw/contracts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -453,4 +454,57 @@ export async function checkEffectiveDistance(opts: {
   const withinRange = effectiveDistanceM <= targetRadius;
 
   return { actualDistanceM, effectiveDistanceM, withinRange };
+}
+
+// ── Play areas ─────────────────────────────────────────────────────────────────
+
+/**
+ * Return all play-area boundary polygons from the database.
+ *
+ * Each row's `geometry_geo_json` text is parsed to a plain object so the
+ * response can be consumed directly by a MapLibre GeoJSON source on the
+ * frontend.  Rows without a polygon are still returned (geojson: null) so
+ * the client knows the day exists but has no drawn boundary yet.
+ *
+ * No auth guard required at the route level for Epic 3 – every authenticated
+ * player needs the polygon to render the day-boundary overlay.
+ */
+export async function getPlayAreas(): Promise<PlayArea[]> {
+  const rows = await db
+    .select({
+      id: playAreas.id,
+      day: playAreas.day,
+      name: playAreas.name,
+      geometryGeoJson: playAreas.geometryGeoJson,
+    })
+    .from(playAreas)
+    .orderBy(playAreas.day);
+
+  return rows.map((row): PlayArea => {
+    let geojson: PlayArea["geojson"] = null;
+
+    if (row.geometryGeoJson) {
+      try {
+        const parsed = JSON.parse(row.geometryGeoJson) as unknown;
+        if (
+          parsed !== null &&
+          typeof parsed === "object" &&
+          "type" in parsed &&
+          "coordinates" in parsed &&
+          (parsed.type === "Polygon" || parsed.type === "MultiPolygon")
+        ) {
+          geojson = parsed as PlayArea["geojson"];
+        }
+      } catch {
+        // Malformed JSON – return null to avoid crashing the client
+      }
+    }
+
+    return {
+      id: row.id,
+      day: row.day,
+      name: row.name ?? null,
+      geojson,
+    };
+  });
 }

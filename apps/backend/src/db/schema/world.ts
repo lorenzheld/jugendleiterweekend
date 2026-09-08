@@ -106,12 +106,19 @@ export const worldObjects = pgTable("world_object", {
 // ── PlayArea ──────────────────────────────────────────────────────────────────
 
 /**
- * Polygon boundaries for each game day (added in Epic 3 once PostGIS
- * Polygon column is confirmed; placeholder until then).
+ * Polygon boundaries for each game day.
+ *
+ * `geometry_geo_json` stores the GeoJSON Polygon string as-is (source of truth
+ * for the API response).  The PostGIS `geom` geometry(Polygon, 4326) column is
+ * added in migration 0002 and kept in sync for spatial queries; it is NOT
+ * declared here because drizzle-kit does not natively support PostGIS types.
  */
 export const playAreas = pgTable("play_area", {
   id: uuid("id").primaryKey().defaultRandom(),
+  /** Game day number (1-based). */
   day: integer("day").notNull(),
-  // Polygon stored as GeoJSON text until PostGIS extension is confirmed.
+  /** Human-readable label, e.g. "Tag 1 – Via Sacra". */
+  name: varchar("name", { length: 128 }),
+  /** GeoJSON Polygon (or MultiPolygon) string – source of truth for the API. */
   geometryGeoJson: text("geometry_geo_json"),
 });

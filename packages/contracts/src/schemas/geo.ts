@@ -148,3 +148,36 @@ export const WsConnectedEventSchema = z.object({
   timestamp: z.string().datetime(),
 });
 export type WsConnectedEvent = z.infer<typeof WsConnectedEventSchema>;
+
+// ── PlayArea ──────────────────────────────────────────────────────────────────
+
+/**
+ * A single game-day boundary polygon returned by GET /api/v1/geo/play-areas.
+ * `geojson` is a GeoJSON Polygon or MultiPolygon object – ready to be fed
+ * directly into a MapLibre GeoJSON source.
+ */
+export const PlayAreaSchema = z.object({
+  id: z.string().uuid(),
+  /** 1-based game day number. */
+  day: z.number().int().positive(),
+  /** Human-readable label, e.g. "Tag 1 – Via Sacra". Nullable if not set. */
+  name: z.string().nullable(),
+  /**
+   * GeoJSON geometry for the day boundary.
+   * Stored as a plain object so the frontend can pass it directly to MapLibre.
+   * Null when no polygon has been defined yet.
+   */
+  geojson: z
+    .object({
+      type: z.enum(["Polygon", "MultiPolygon"]),
+      coordinates: z.array(z.unknown()),
+    })
+    .nullable(),
+});
+export type PlayArea = z.infer<typeof PlayAreaSchema>;
+
+/** Response body for GET /api/v1/geo/play-areas. */
+export const PlayAreasResponseSchema = z.object({
+  areas: z.array(PlayAreaSchema),
+});
+export type PlayAreasResponse = z.infer<typeof PlayAreasResponseSchema>;

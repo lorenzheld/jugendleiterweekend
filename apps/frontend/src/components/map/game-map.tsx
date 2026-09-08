@@ -2,21 +2,33 @@
  * GameMap
  * -------
  * Renders the basemap (MapTiler / OSM) via react-map-gl (MapLibre GL JS)
- * and shows the current player position as a pulsing marker.
+ * and shows:
+ *   • The current player position as a pulsing marker.
+ *   • WorldObject markers for all objects within discovery_radius_m (≤ 55 m).
+ *   • Day-boundary PlayArea polygons as semi-transparent overlays.
  *
  * The map style URL is configured via VITE_MAPTILER_KEY.
  * If the key is missing a MapLibre demo style is used as fallback.
  *
- * GPS position is continuously tracked via the `useGeolocation` hook which
- * also rate-limits server updates (every 30 s).
+ * GPS position is continuously tracked via `useGeolocation` which also
+ * rate-limits server updates (every 30 s).
+ *
+ * WorldObjects are kept in sync via `useWorldObjects` (REST + WebSocket).
+ * PlayArea polygons are fetched once on mount and cached for 5 min.
  */
 
 import { useCallback, useRef, useState } from "react";
-import Map, { type MapRef, Marker, NavigationControl } from "react-map-gl/maplibre";
+import Map, { type MapRef, Marker, NavigationControl, Source, Layer } from "react-map-gl/maplibre";
+import type { FillLayerSpecification, LineLayerSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useQuery } from "@tanstack/react-query";
 
 import { useGeolocation } from "../../hooks/use-geolocation.js";
+import { useWorldObjects } from "../../hooks/use-world-objects.js";
 import { useAuth } from "../../contexts/auth.context.js";
+import { api } from "../../lib/api.js";
+import { WorldObjectMarker } from "./world-object-marker.js";
+import type { PlayAreasResponse } from "@jlw/contracts";
 
 // ── Map style ─────────────────────────────────────────────────────────────────
 
@@ -31,6 +43,26 @@ const MAP_STYLE = MAPTILER_KEY
 const DEFAULT_CENTER = { longitude: 8.749, latitude: 47.126 };
 const DEFAULT_ZOOM = 15;
 
+// ── PlayArea layer styles ─────────────────────────────────────────────────────
+
+const PLAY_AREA_FILL_STYLE: Omit<FillLayerSpecification, "id" | "source"> = {
+  type: "fill",
+  paint: {
+    "fill-color": "#cd7f32",
+    "fill-opacity": 0.08,
+  },
+};
+
+const PLAY_AREA_OUTLINE_STYLE: Omit<LineLayerSpecification, "id" | "source"> = {
+  type: "line",
+  paint: {
+    "line-color": "#cd7f32",
+    "line-width": 2,
+    "line-opacity": 0.6,
+    "line-dasharray": [4, 3],
+  },
+};
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface GameMapProps {
@@ -41,9 +73,37 @@ interface GameMapProps {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function GameMap({ onBack }: GameMapProps) {
-  const { profile } = useAuth();
+  const { profile, token } = useAuth();
   const { position, error: geoError, isReady } = useGeolocation();
 
+  // ── WorldObjects (nearby markers) ─────────────────────────────────────────
+  const { worldObjects, wsStatus } = useWorldObjects(token, position);
+
+  // ── PlayAreas (day-boundary polygons) ─────────────────────────────────────
+  const { data: playAreaData } = useQuery({
+    queryKey: ["play-areas"],
+    queryFn: () => api.get<PlayAreasResponse>("/geo/play-areas"),
+    enabled: !!token,
+    staleTime: 5 * 60_000, // 5 minutes
+  });
+
+  // Build a GeoJSON FeatureCollection from all play areas that have geometry.
+  // Each Feature carries a `day` property for potential per-day styling.
+  const playAreaGeoJson: GeoJSON.FeatureCollection | null =
+    (playAreaData?.areas ?? []).some((a) => a.geojson !== null)
+      ? {
+          type: "FeatureCollection",
+          features: (playAreaData?.areas ?? [])
+            .filter((a) => a.geojson !== null)
+            .map((a) => ({
+              type: "Feature" as const,
+              properties: { day: a.day, name: a.name ?? `Tag ${a.day}` },
+              geometry: a.geojson as GeoJSON.Geometry,
+            })),
+        }
+      : null;
+
+  // ── Map pan/zoom helpers ───────────────────────────────────────────────────
   const mapRef = useRef<MapRef | null>(null);
   const [hasFollowedInitial, setHasFollowedInitial] = useState(false);
 
@@ -69,8 +129,10 @@ export function GameMap({ onBack }: GameMapProps) {
     setHasFollowedInitial(true);
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#1a1a2e]">
+
       {/* ── Map ─────────────────────────────────────────────────────────── */}
       <Map
         ref={mapRef}
@@ -81,14 +143,36 @@ export function GameMap({ onBack }: GameMapProps) {
         style={{ width: "100%", height: "100%" }}
         mapStyle={MAP_STYLE}
         onLoad={handleMapLoad}
-        // Disable satellite rotation on mobile to keep north-up for orientation
         bearing={0}
         attributionControl={false}
       >
         {/* Navigation controls (zoom +/-) */}
         <NavigationControl position="bottom-right" showCompass={false} />
 
-        {/* Player marker */}
+        {/* ── PlayArea polygons ─────────────────────────────────────────── */}
+        {playAreaGeoJson && (
+          <Source id="play-areas" type="geojson" data={playAreaGeoJson}>
+            {/* Semi-transparent fill */}
+            <Layer
+              id="play-areas-fill"
+              {...PLAY_AREA_FILL_STYLE}
+              source="play-areas"
+            />
+            {/* Dashed outline */}
+            <Layer
+              id="play-areas-outline"
+              {...PLAY_AREA_OUTLINE_STYLE}
+              source="play-areas"
+            />
+          </Source>
+        )}
+
+        {/* ── WorldObject markers ───────────────────────────────────────── */}
+        {worldObjects.map((obj) => (
+          <WorldObjectMarker key={obj.id} object={obj} />
+        ))}
+
+        {/* ── Player marker ─────────────────────────────────────────────── */}
         {position && (
           <Marker longitude={position.lng} latitude={position.lat} anchor="center">
             {/* Pulsing dot */}
@@ -137,8 +221,17 @@ export function GameMap({ onBack }: GameMapProps) {
         )}
       </div>
 
+      {/* Nearby objects counter */}
+      {worldObjects.length > 0 && (
+        <div className="absolute top-14 left-3 z-10">
+          <div className="rounded-full bg-black/60 px-3 py-1 text-xs text-[#cd7f32] backdrop-blur-sm">
+            {worldObjects.length} Objekt{worldObjects.length !== 1 ? "e" : ""} in Reichweite
+          </div>
+        </div>
+      )}
+
       {/* GPS status badge */}
-      <div className="absolute bottom-20 left-3 z-10">
+      <div className="absolute bottom-20 left-3 z-10 flex flex-col gap-1">
         {!isReady && !geoError && (
           <div className="rounded-full bg-black/60 px-3 py-1 text-xs text-[#cd7f32] backdrop-blur-sm animate-pulse">
             📡 GPS wird gesucht…
@@ -152,6 +245,12 @@ export function GameMap({ onBack }: GameMapProps) {
         {isReady && position && (
           <div className="rounded-full bg-black/50 px-3 py-1 text-[10px] text-green-400 backdrop-blur-sm">
             📡 ±{Math.round(position.accuracy)} m
+          </div>
+        )}
+        {/* WS status indicator (only show when disconnected as a warning) */}
+        {wsStatus === "disconnected" && isReady && (
+          <div className="rounded-full bg-yellow-900/60 px-3 py-1 text-[10px] text-yellow-400 backdrop-blur-sm">
+            ⚡ Echtzeit getrennt…
           </div>
         )}
       </div>

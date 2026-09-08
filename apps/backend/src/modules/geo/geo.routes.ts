@@ -16,10 +16,12 @@ import {
   UpdateLocationRequestSchema,
   WorldObjectsResponseSchema,
   WsConnectedEventSchema,
+  PlayAreasResponseSchema,
 } from "@jlw/contracts";
 import {
   updatePlayerLocation,
   getNearbyWorldObjects,
+  getPlayAreas,
 } from "./geo.service.js";
 import { eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
@@ -99,6 +101,28 @@ export async function geoRoutes(server: FastifyInstance): Promise<void> {
       });
 
       return reply.status(200).send(response);
+    },
+  );
+
+  // ── GET /play-areas ─────────────────────────────────────────────────────────
+  /**
+   * Returns all play-area boundary polygons ordered by day number.
+   * Each area carries an optional GeoJSON geometry that the player client
+   * renders as a day-boundary overlay on the map.
+   *
+   * Results are stable for the lifetime of a game event, so clients may
+   * cache aggressively (Cache-Control: public, max-age=300).
+   */
+  server.get(
+    "/play-areas",
+    { onRequest: [server.authenticate] },
+    async (_request, reply) => {
+      const areas = await getPlayAreas();
+      const body = PlayAreasResponseSchema.parse({ areas });
+      return reply
+        .header("Cache-Control", "public, max-age=300")
+        .status(200)
+        .send(body);
     },
   );
 
