@@ -40,6 +40,23 @@ const WorldObjectsQuerySchema = z.object({
     .transform(Number)
     .pipe(z.number().positive().max(500))
     .optional(),
+  /**
+   * Current player latitude (optional).
+   * When provided together with `lng`, the server uses these coordinates
+   * directly instead of the last-stored DB position, eliminating the
+   * race condition between POST /location and GET /world-objects.
+   */
+  lat: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().min(-90).max(90))
+    .optional(),
+  /** Current player longitude (optional, paired with `lat`). */
+  lng: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().min(-180).max(180))
+    .optional(),
 });
 
 // ── WS token query schema ─────────────────────────────────────────────────────
@@ -91,6 +108,12 @@ export async function geoRoutes(server: FastifyInstance): Promise<void> {
       const { objects, playerLat, playerLng } = await getNearbyWorldObjects({
         accountId,
         accuracy,
+        // Pass through live coords when the client supplies them so the
+        // response is consistent with the player's current position even
+        // before POST /location has persisted to the DB.
+        ...(query.lat != null && query.lng != null
+          ? { overrideLat: query.lat, overrideLng: query.lng }
+          : {}),
       });
 
       const response = WorldObjectsResponseSchema.parse({

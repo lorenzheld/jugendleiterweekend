@@ -96,8 +96,9 @@ export function useWorldObjects(
     queryKey: ["world-objects", tileKey],
     queryFn: async () => {
       const acc = position?.accuracy ?? 15;
+      const latParam = position ? `&lat=${position.lat}&lng=${position.lng}` : "";
       return api.get<WorldObjectsResponse>(
-        `/geo/world-objects?accuracy=${Math.round(acc)}`,
+        `/geo/world-objects?accuracy=${Math.round(acc)}${latParam}`,
       );
     },
     enabled: !!token && !!position,

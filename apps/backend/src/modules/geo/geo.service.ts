@@ -336,12 +336,15 @@ async function queryNearbyWorldObjects(opts: {
 export async function getNearbyWorldObjects(opts: {
   accountId: string;
   accuracy: number;
+  /** Optional: use these coordinates directly instead of the DB-stored position. */
+  overrideLat?: number;
+  overrideLng?: number;
 }): Promise<{
   objects: WorldObjectNearby[];
   playerLat: number;
   playerLng: number;
 }> {
-  const { accountId, accuracy } = opts;
+  const { accountId, accuracy, overrideLat, overrideLng } = opts;
 
   // Load player (need lat/lng + teamId)
   const [player] = await db
@@ -363,13 +366,22 @@ export async function getNearbyWorldObjects(opts: {
   }
 
   if (player.lastLat == null || player.lastLng == null) {
-    // Player hasn't sent a location yet – return empty list
+    // Player hasn't sent a location yet.
+    // If the client supplied live coords, use those; otherwise return empty.
+    if (overrideLat != null && overrideLng != null) {
+      return { objects: [], playerLat: overrideLat, playerLng: overrideLng };
+    }
     return { objects: [], playerLat: 0, playerLng: 0 };
   }
 
+  // Prefer live coords supplied by the client (avoids race condition between
+  // POST /location and GET /world-objects when GPS position changes).
+  const queryLat = overrideLat ?? player.lastLat;
+  const queryLng = overrideLng ?? player.lastLng;
+
   const nearby = await queryNearbyWorldObjects({
-    lat: player.lastLat,
-    lng: player.lastLng,
+    lat: queryLat,
+    lng: queryLng,
     accuracy,
   });
 
@@ -410,8 +422,8 @@ export async function getNearbyWorldObjects(opts: {
 
   return {
     objects,
-    playerLat: player.lastLat,
-    playerLng: player.lastLng,
+    playerLat: queryLat,
+    playerLng: queryLng,
   };
 }
 
