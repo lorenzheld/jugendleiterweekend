@@ -31,10 +31,15 @@ async function testCombatSystem() {
       .limit(1);
 
     if (!testTeam) {
-      [testTeam] = await db
+      const results = await db
         .insert(teams)
         .values({ name: "Test Team Combat" })
         .returning();
+      testTeam = results[0];
+      if (!testTeam) {
+        console.error("   ❌ Failed to create test team!");
+        return;
+      }
       console.log(`   ✅ Created test team: ${testTeam.id}`);
     } else {
       console.log(`   ✅ Using existing test team: ${testTeam.id}`);
@@ -64,7 +69,7 @@ async function testCombatSystem() {
       .limit(1);
 
     if (!testEnemy) {
-      [testEnemy] = await db
+      const results = await db
         .insert(worldObjects)
         .values({
           externalId: "enemy:test_combat_enemy",
@@ -79,6 +84,11 @@ async function testCombatSystem() {
           publishable: true,
         })
         .returning();
+      testEnemy = results[0];
+      if (!testEnemy) {
+        console.error("   ❌ Failed to create test enemy!");
+        return;
+      }
       console.log(`   ✅ Created test enemy: ${testEnemy.id}`);
     } else {
       console.log(`   ✅ Using existing enemy: ${testEnemy.id} (${testEnemy.name})`);
