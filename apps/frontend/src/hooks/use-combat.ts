@@ -54,7 +54,8 @@ export function useCombat(playerId: string, token?: string) {
     async (actionType: ActionType, targetId?: string) => {
       if (!activeCombat || !token) return;
 
-      const idempotencyKey = crypto.randomUUID();
+      // Generate UUID (browser-compatible)
+      const idempotencyKey = window.crypto.randomUUID();
 
       try {
         const res = await fetch(
