@@ -4,7 +4,10 @@
  * Wraps the browser's Geolocation API (`navigator.geolocation.watchPosition`).
  *
  * - Automatically starts watching on mount and cleans up on unmount.
- * - Periodically sends position updates to the backend (every SEND_INTERVAL_MS).
+ * - Sends position to the backend immediately when:
+ *     a) it is the first fix ever, OR
+ *     b) the player moved more than SIGNIFICANT_MOVE_M metres since the last send.
+ * - Always sends at least every SEND_INTERVAL_MS (keep-alive heartbeat).
  * - Exposes the latest position and any error string.
  */
 
@@ -12,8 +15,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../lib/api.js";
 import type { UpdateLocationRequest } from "@jlw/contracts";
 
-// How often (ms) we push location to the server even if position didn't change.
-const SEND_INTERVAL_MS = 30_000; // 30 seconds
+// Keep-alive heartbeat – send even if the player barely moved.
+const SEND_INTERVAL_MS = 5_000; // 5 seconds
+
+// Minimum distance (metres) that triggers an immediate send even within the
+// heartbeat window.  Lowered to 5 m so DevTools location changes are picked
+// up quickly.
+const SIGNIFICANT_MOVE_M = 5;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -33,6 +41,25 @@ export interface UseGeolocationResult {
   isReady: boolean;
 }
 
+// ── Haversine distance (metres) ───────────────────────────────────────────────
+
+function haversineM(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
+  const R = 6_371_000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useGeolocation(enabled = true): UseGeolocationResult {
@@ -43,12 +70,28 @@ export function useGeolocation(enabled = true): UseGeolocationResult {
   // capture a stale closure.
   const latestPosition = useRef<GeoPosition | null>(null);
   const lastSentAt = useRef<number>(0);
+  const lastSentPos = useRef<{ lat: number; lng: number } | null>(null);
 
-  /** Push position to the backend if enough time has elapsed. */
+  /**
+   * Push position to the backend.
+   * Sends immediately if:
+   *   - never sent before, OR
+   *   - player moved ≥ SIGNIFICANT_MOVE_M metres, OR
+   *   - heartbeat interval elapsed.
+   */
   const maybeSendToBackend = useCallback(async (pos: GeoPosition) => {
     const now = Date.now();
-    if (now - lastSentAt.current < SEND_INTERVAL_MS) return;
+    const elapsed = now - lastSentAt.current;
+    const prev = lastSentPos.current;
+
+    const movedSignificantly =
+      prev == null ||
+      haversineM(prev.lat, prev.lng, pos.lat, pos.lng) >= SIGNIFICANT_MOVE_M;
+
+    if (elapsed < SEND_INTERVAL_MS && !movedSignificantly) return;
+
     lastSentAt.current = now;
+    lastSentPos.current = { lat: pos.lat, lng: pos.lng };
 
     const payload: UpdateLocationRequest = {
       lat: pos.lat,
@@ -90,7 +133,7 @@ export function useGeolocation(enabled = true): UseGeolocationResult {
       setPosition(pos);
       setError(null);
 
-      // Fire-and-forget location sync (rate-limited internally)
+      // Fire-and-forget location sync
       void maybeSendToBackend(pos);
     };
 

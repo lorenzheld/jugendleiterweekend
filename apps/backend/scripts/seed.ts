@@ -263,7 +263,9 @@ async function upsertWorldObject(
       exitHysteresisRadiusM,
       aggroRadiusM,
       contentStatus: mapContentStatus(props.content_status ?? "DRAFT"),
-      publishable: props.publishable,
+      // In dev (SKIP_FILTER) mode force publishable=true so objects are
+      // discoverable without needing APPROVED content in the GeoJSON.
+      publishable: SKIP_FILTER ? true : props.publishable,
       rawPropertiesJson: JSON.stringify(props),
       contentVersion: 1,
     })
@@ -280,7 +282,7 @@ async function upsertWorldObject(
         exitHysteresisRadiusM,
         aggroRadiusM,
         contentStatus: mapContentStatus(props.content_status ?? "DRAFT"),
-        publishable: props.publishable,
+        publishable: SKIP_FILTER ? true : props.publishable,
         rawPropertiesJson: JSON.stringify(props),
         contentVersion: sql`${worldObjects.contentVersion} + 1`,
       },
