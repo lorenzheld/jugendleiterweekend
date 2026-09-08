@@ -14,6 +14,7 @@ import { db } from "../../db/client.js";
 import { accounts, sessions } from "../../db/schema/account.js";
 import { players, teams } from "../../db/schema/player.js";
 import type { MeResponse } from "@jlw/contracts";
+import { getTeamBalance } from "../economy/ledger.service.js";
 
 const scryptAsync = promisify<
   crypto.BinaryLike,
@@ -163,7 +164,13 @@ export async function getMe(accountId: string): Promise<MeResponse> {
       hpCurrent: player.hpCurrent,
       status: player.status,
       team: team
-        ? { id: team.id, name: team.name, inventoryCapacity: team.inventoryCapacity }
+        ? {
+            id: team.id,
+            name: team.name,
+            inventoryCapacity: team.inventoryCapacity,
+            fame: await getTeamBalance(team.id, "FAME"),
+            denarii: await getTeamBalance(team.id, "DENARII"),
+          }
         : null,
     },
   };

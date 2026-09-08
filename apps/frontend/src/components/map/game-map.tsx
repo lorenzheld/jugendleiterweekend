@@ -53,9 +53,12 @@ import {
   useSubmitAnswer,
   useReachLocation,
   useCompleteQuest,
+  useDefeatEnemy,
 } from "../../hooks/use-quests.js";
 import { QuestHUD } from "../quest/quest-hud.js";
 import { QuestBottomSheet } from "../quest/quest-bottom-sheet.js";
+import { EconomySheet } from "../inventory/economy-sheet.js";
+import { useEconomySummary } from "../../hooks/use-economy.js";
 
 // ── Map style ─────────────────────────────────────────────────────────────────
 
@@ -139,6 +142,10 @@ export function GameMap({ onBack }: GameMapProps) {
   const submitAnswerMutation = useSubmitAnswer();
   const reachLocationMutation = useReachLocation();
   const completeQuestMutation = useCompleteQuest();
+  const defeatEnemyMutation = useDefeatEnemy();
+  const { data: economy } = useEconomySummary(token);
+
+  const [inventoryOpen, setInventoryOpen] = useState(false);
 
   // ── Quest UI state ─────────────────────────────────────────────────────────
   /** ID of the active QuestRun currently shown in the sheet. */
@@ -223,6 +230,10 @@ export function GameMap({ onBack }: GameMapProps) {
 
   async function handleCompleteQuest(questRunId: string) {
     return completeQuestMutation.mutateAsync(questRunId);
+  }
+
+  async function handleDefeatEnemy(questRunId: string, stepId: string) {
+    return defeatEnemyMutation.mutateAsync({ questRunId, stepId });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -329,13 +340,23 @@ export function GameMap({ onBack }: GameMapProps) {
 
         {/* Player name & team */}
         {profile?.player?.team && (
-          <div className="ml-auto text-right">
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setInventoryOpen(true)}
+              className="pointer-events-auto rounded-full bg-black/50 px-3 py-1.5
+                         text-[11px] font-semibold text-[#f4e4c1] backdrop-blur-sm
+                         hover:bg-black/70 active:scale-95 transition"
+            >
+              🎒 {economy?.denarii ?? "—"}₫ · {economy?.fame ?? "—"}★
+            </button>
+            <div className="text-right">
             <p className="text-xs font-bold text-[#cd7f32] tracking-widest">
               {profile.player.team.name}
             </p>
             <p className="text-[10px] text-[#f4e4c1]/70">
               {profile.account.username}
             </p>
+            </div>
           </div>
         )}
       </div>
@@ -410,8 +431,13 @@ export function GameMap({ onBack }: GameMapProps) {
           onSubmitAnswer={handleSubmitAnswer}
           onConfirmReach={handleReachLocation}
           onComplete={handleCompleteQuest}
+          onDefeatEnemy={handleDefeatEnemy}
           onClose={handleCloseSheet}
         />
+      )}
+
+      {inventoryOpen && (
+        <EconomySheet token={token} onClose={() => setInventoryOpen(false)} />
       )}
     </div>
   );

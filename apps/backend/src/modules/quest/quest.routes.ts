@@ -25,6 +25,7 @@ import {
   submitAnswer,
   completeQuest,
   getSingleRun,
+  resolveDefeatEnemy,
 } from "./quest.service.js";
 import { db } from "../../db/client.js";
 import { players } from "../../db/schema/player.js";
@@ -206,6 +207,28 @@ export async function questRoutes(server: FastifyInstance): Promise<void> {
     },
   );
 
+  // ── POST /api/v1/quests/runs/:runId/steps/:stepId/defeat ─────────────────
+  server.post(
+    "/runs/:runId/steps/:stepId/defeat",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const { runId, stepId } = request.params as {
+        runId: string;
+        stepId: string;
+      };
+
+      const result = await resolveDefeatEnemy({
+        accountId,
+        questRunId: runId,
+        stepId,
+        wsHub: server.wsHub,
+      });
+
+      return reply.status(200).send(result);
+    },
+  );
+
   // ── POST /api/v1/quests/runs/:runId/complete ──────────────────────────────
   server.post(
     "/runs/:runId/complete",
@@ -214,13 +237,19 @@ export async function questRoutes(server: FastifyInstance): Promise<void> {
       const { sub: accountId } = request.user as { sub: string };
       const { runId } = request.params as { runId: string };
 
-      const { glory, denarii } = await completeQuest({
+      const granted = await completeQuest({
         accountId,
         questRunId: runId,
         wsHub: server.wsHub,
       });
 
-      return reply.send({ questRunId: runId, glory, denarii });
+      return reply.send({
+        questRunId: runId,
+        glory: granted.glory,
+        denarii: granted.denarii,
+        items: granted.items,
+        itemsSkipped: granted.itemsSkipped,
+      });
     },
   );
 }

@@ -16,7 +16,12 @@
  */
 
 import { useState } from "react";
-import type { QuestAvailable, QuestRunDetail, StepResult } from "@jlw/contracts";
+import type {
+  CompleteQuestResponse,
+  QuestAvailable,
+  QuestRunDetail,
+  StepResult,
+} from "@jlw/contracts";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -43,7 +48,8 @@ interface QuestBottomSheetProps {
     stepId: string,
   ) => Promise<StepResult>) | undefined;
   /** Callback when user taps "Quest abschließen" */
-  onComplete?: ((questRunId: string) => Promise<{ glory: number; denarii: number }>) | undefined;
+  onComplete?: ((questRunId: string) => Promise<CompleteQuestResponse>) | undefined;
+  onDefeatEnemy?: ((questRunId: string, stepId: string) => Promise<StepResult>) | undefined;
   /** Close the sheet */
   onClose: () => void;
 }
@@ -60,6 +66,7 @@ export function QuestBottomSheet({
   onSubmitAnswer,
   onConfirmReach,
   onComplete,
+  onDefeatEnemy,
   onClose,
 }: QuestBottomSheetProps) {
   const [answerInput, setAnswerInput] = useState("");
@@ -68,10 +75,7 @@ export function QuestBottomSheet({
     ok: boolean;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [reward, setReward] = useState<{
-    glory: number;
-    denarii: number;
-  } | null>(null);
+  const [reward, setReward] = useState<CompleteQuestResponse | null>(null);
 
   // ── Determine mode ──────────────────────────────────────────────────────────
   const allDone =
@@ -160,6 +164,23 @@ export function QuestBottomSheet({
     }
   }
 
+  async function handleDefeat() {
+    if (!activeRun?.currentStep || !onDefeatEnemy) return;
+    setIsLoading(true);
+    setFeedback(null);
+    try {
+      const result = await onDefeatEnemy(activeRun.id, activeRun.currentStep.stepId);
+      setFeedback({
+        text: result.message,
+        ok: result.status === "COMPLETED",
+      });
+    } catch (e) {
+      setFeedback({ text: (e as Error).message, ok: false });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function handleComplete() {
     if (!activeRun || !onComplete) return;
     setIsLoading(true);
@@ -200,6 +221,8 @@ export function QuestBottomSheet({
             questTitle={activeRun?.questTitle ?? "Quest"}
             glory={reward.glory}
             denarii={reward.denarii}
+            items={reward.items ?? []}
+            itemsSkipped={reward.itemsSkipped}
             onClose={onClose}
           />
         )}
@@ -228,6 +251,7 @@ export function QuestBottomSheet({
             playerAccuracy={playerAccuracy}
             onAnswer={handleAnswer}
             onReach={handleReach}
+            onDefeat={handleDefeat}
             onClose={onClose}
           />
         )}
@@ -361,6 +385,7 @@ function ActiveView({
   playerAccuracy,
   onAnswer,
   onReach,
+  onDefeat,
   onClose,
 }: {
   run: QuestRunDetail;
@@ -373,6 +398,7 @@ function ActiveView({
   playerAccuracy?: number | undefined;
   onAnswer: () => void;
   onReach: () => void;
+  onDefeat: () => void;
   onClose: () => void;
 }) {
   const step = run.currentStep;
@@ -477,9 +503,21 @@ function ActiveView({
 
           {/* DEFEAT_ENEMY */}
           {step.stepActionType === "DEFEAT_ENEMY" && (
-            <p className="text-xs text-white/50">
-              ⚔️ Besiegt den Gegner um diesen Schritt abzuschließen. (Epic 5)
-            </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-white/50">
+                ⚔️ Besiegt den Gegner, um Beute zu erhalten und den Schritt abzuschließen.
+                (Volles Kampfsystem folgt in Epic 6.)
+              </p>
+              <button
+                onClick={onDefeat}
+                disabled={isLoading}
+                className="w-full rounded-xl bg-[#cd7f32] py-3 text-sm font-bold
+                           text-[#1a1a2e] disabled:opacity-50 transition active:scale-95
+                           hover:bg-[#b8712d]"
+              >
+                {isLoading ? "Kampf…" : "⚔️ Gegner besiegen"}
+              </button>
+            </div>
           )}
 
           {/* UPLOAD_MEDIA */}
@@ -573,11 +611,15 @@ function RewardView({
   questTitle,
   glory,
   denarii,
+  items,
+  itemsSkipped,
   onClose,
 }: {
   questTitle: string;
   glory: number;
   denarii: number;
+  items: { defKey: string; quantity: number; owner: "PLAYER" | "TEAM" }[];
+  itemsSkipped?: boolean | undefined;
   onClose: () => void;
 }) {
   return (
@@ -603,6 +645,19 @@ function RewardView({
           <span className="text-xs text-white/40">Denare</span>
         </div>
       </div>
+
+      {items.length > 0 && (
+        <ul className="w-full text-center text-sm text-[#f4e4c1]/80">
+          {items.map((it) => (
+            <li key={`${it.owner}-${it.defKey}`}>
+              {it.quantity}× {it.defKey} ({it.owner === "TEAM" ? "Team" : "Person"})
+            </li>
+          ))}
+        </ul>
+      )}
+      {itemsSkipped && (
+        <p className="text-xs text-yellow-400">Inventar voll – manche Items fielen aus.</p>
+      )}
 
       <button
         onClick={onClose}

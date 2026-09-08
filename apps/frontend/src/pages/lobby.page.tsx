@@ -32,7 +32,7 @@ export function LobbyPage({ onEnterMap }: LobbyPageProps) {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["me"],
     queryFn: () => api.get<MeResponse>("/auth/me"),
-    staleTime: Infinity, // Profile won't change mid-session
+    staleTime: 15_000,
   });
 
   // Enrich AuthContext with the full profile once loaded
@@ -146,6 +146,18 @@ export function LobbyPage({ onEnterMap }: LobbyPageProps) {
                 <p className="mt-1 font-bold text-[#f4e4c1]">
                   {me.player.team.name}
                 </p>
+                <div className="mt-2 flex justify-between text-xs">
+                  <span className="text-[#888]">Ruhm</span>
+                  <span className="font-semibold text-[#cd7f32]">
+                    {me.player.team.fame}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#888]">Denare</span>
+                  <span className="font-semibold text-[#f4e4c1]">
+                    {me.player.team.denarii}
+                  </span>
+                </div>
               </div>
             )}
           </div>

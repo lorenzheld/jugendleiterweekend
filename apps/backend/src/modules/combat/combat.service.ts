@@ -12,10 +12,9 @@ import {
 } from "../../db/schema/combat.js";
 import { players, teams } from "../../db/schema/player.js";
 import { worldObjects } from "../../db/schema/world.js";
-import { ledgerEntries } from "../../db/schema/economy_v2.js";
+import { ledgerEntries } from "../../db/schema/economy.js";
 import type { WsHub } from "../ws/ws.hub.js";
 import { randomUUID } from "node:crypto";
-import { grantRewards, COMBAT_REWARD_PROFILE } from "../economy/rewards.service.js";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -242,7 +241,7 @@ export async function getCombatInstance(combatId: string): Promise<CombatInstanc
   return {
     id: combat.id,
     type: combat.type as "PVE" | "PVP" | "BOSS",
-    state: combat.state as CombatStateEnum,
+    state: combat.state as CombatInstance["state"],
     roundNumber: combat.roundNumber,
     startedAt: combat.startedAt,
     combatants: enrichedCombatants,
@@ -250,7 +249,7 @@ export async function getCombatInstance(combatId: string): Promise<CombatInstanc
       id: a.id,
       roundNumber: a.roundNumber,
       actorId: a.actorId,
-      actionType: a.actionType as ActionTypeEnum,
+      actionType: a.actionType as ActionType,
       targetId: a.targetId ?? undefined,
       isLocked: a.isLocked,
     })),
@@ -263,7 +262,7 @@ export async function getCombatInstance(combatId: string): Promise<CombatInstanc
 export async function submitCombatAction(opts: {
   combatId: string;
   playerId: string;
-  actionType: ActionTypeEnum;
+  actionType: ActionType;
   targetId?: string;
   idempotencyKey: string;
 }): Promise<CombatAction> {
@@ -306,17 +305,21 @@ export async function submitCombatAction(opts: {
       roundNumber: combat.roundNumber,
       actorId: playerCombatant.id,
       actionType,
-      targetId,
+      targetId: targetId ?? null,
       isLocked: false,
       idempotencyKey,
     })
     .returning();
 
+  if (!action) {
+    throw new Error("Failed to create action");
+  }
+
   return {
     id: action.id,
     roundNumber: action.roundNumber,
     actorId: action.actorId,
-    actionType: action.actionType as ActionTypeEnum,
+    actionType: action.actionType as ActionType,
     targetId: action.targetId ?? undefined,
     isLocked: action.isLocked,
   };
@@ -446,14 +449,16 @@ async function resolveRound(combatId: string, wsHub?: WsHub): Promise<CombatLog[
         })
         .returning();
 
-      roundActions.push({
-        id: aiAction.id,
-        roundNumber: aiAction.roundNumber,
-        actorId: aiAction.actorId,
-        actionType: aiAction.actionType as ActionTypeEnum,
-        targetId: aiAction.targetId ?? undefined,
-        isLocked: aiAction.isLocked,
-      });
+      if (aiAction) {
+        roundActions.push({
+          id: aiAction.id,
+          roundNumber: aiAction.roundNumber,
+          actorId: aiAction.actorId,
+          actionType: aiAction.actionType as ActionType,
+          targetId: aiAction.targetId ?? undefined,
+          isLocked: aiAction.isLocked,
+        });
+      }
     }
   }
 
@@ -470,7 +475,8 @@ async function resolveRound(combatId: string, wsHub?: WsHub): Promise<CombatLog[
     if (!actor || actor.isDowned) continue;
 
     if (action.actionType === "ATTACK" && action.targetId) {
-      const target = combat.combatants.find((c) => c.id === action.targetId);
+      const targetMaybe = combat.combatants.find((c) => c.id === action.targetId);
+      const target = targetMaybe;
       if (!target || target.isDowned) continue;
 
       // Calculate damage
@@ -843,11 +849,12 @@ function schedulePvPEscalation(challengeId: string, delayMs: number, wsHub?: WsH
  * Escalate PvP challenge to combat after warning period.
  */
 async function escalatePvPChallenge(challengeId: string, wsHub?: WsHub): Promise<void> {
-  const [challenge] = await db
+  const challenges = await db
     .select()
     .from(pvpChallenges)
     .where(eq(pvpChallenges.id, challengeId));
 
+  const challenge = challenges[0];
   if (!challenge || challenge.state !== "WARNING") {
     return; // Already resolved
   }

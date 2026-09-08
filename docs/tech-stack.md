@@ -34,7 +34,7 @@ Die Anwendung ist in drei logische Tiers unterteilt:
     *   **Geo & World Modul:** Verarbeitet PostGIS-Queries, Sichtbarkeiten, Interaktionsradien (Standard 15m, Aggro 20m, etc.).
     *   **Quest & Dialogue Modul:** State-Machine für Quests (Active, Completed, Pending_Review), Dialogbäume.
     *   **Combat & Encounter Modul:** Rundenbasierte Engine (15s Timer, Locks, Initiative, Damage-Calculation), State für PvE, PvP und Bosskämpfe.
-    *   **Economy Modul:** Ledger-basiertes System (Append-only) für Ruhm, Denare und Items. Atomare Transaktionen für Handel und Stores.
+    *   **Economy Modul:** Ledger-basiertes System (Append-only) für Ruhm, Denare und Items. Atomare Transaktionen für Team↔Team‑Handel. Die Store‑UI/Buy‑Sell‑Workflows werden für das Event weggelassen.
     *   **Media & Admin Modul:** Pre-Signed S3-URLs, Review-Workflow, Audit-Log (Event-Sourcing-Light für Commands).
 
 ## 1.3 GeoJSON Ingestion Pipeline & PostGIS Seeding

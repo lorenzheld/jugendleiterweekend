@@ -29,6 +29,41 @@
       "when": 1788933284002,
       "tag": "0003_epic4_quest_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788933284003,
+      "tag": "0004_epic5_inventory_economy",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788933284004,
+      "tag": "0005_epic5_trade",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788933284005,
+      "tag": "0006_epic5_inventory_actions",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788933284006,
+      "tag": "0007_epic5_item_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788933284007,
+      "tag": "0008_epic5_trade_offers",
+      "breakpoints": true
     }
   ]
 }

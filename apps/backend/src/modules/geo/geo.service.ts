@@ -513,8 +513,8 @@ async function checkPvEEncounterTrigger(opts: {
     (t) =>
       t.newZone === "AGGRO" &&
       (t.previousZone === "OUTSIDE" ||
-        t.previousZone === "DISCOVERY" ||
-        t.previousZone === "INTERACTION")
+        t.previousZone === "DISCOVERED" ||
+        t.previousZone === "INTERACTING")
   );
 
   if (aggroTransitions.length === 0) {

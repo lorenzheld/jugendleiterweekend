@@ -15,7 +15,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed-test-account.ts",
     "seed": "tsx scripts/seed.ts",
-    "seed:dev": "cross-env SEED_SKIP_FILTER=true tsx scripts/seed.ts"
+    "seed:dev": "cross-env SEED_SKIP_FILTER=true tsx scripts/seed.ts",
+    "test:epic5": "tsx scripts/test-epic5.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

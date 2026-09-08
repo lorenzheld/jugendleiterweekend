@@ -173,6 +173,29 @@ export function useCompleteQuest() {
       void queryClient.invalidateQueries({
         queryKey: QUEST_QUERY_KEYS.available,
       });
+      void queryClient.invalidateQueries({ queryKey: ["economy"] });
+      void queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+}
+
+export function useDefeatEnemy() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ questRunId, stepId }: { questRunId: string; stepId: string }) =>
+      api.post<StepResult>(
+        `/quests/runs/${questRunId}/steps/${stepId}/defeat`,
+        {},
+      ),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: QUEST_QUERY_KEYS.active });
+      void queryClient.invalidateQueries({
+        queryKey: QUEST_QUERY_KEYS.run(variables.questRunId),
+      });
+      void queryClient.invalidateQueries({ queryKey: ["economy"] });
+      void queryClient.invalidateQueries({ queryKey: ["inventory"] });
     },
   });
 }

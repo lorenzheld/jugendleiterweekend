@@ -12,6 +12,7 @@ import { geoRoutes } from "./modules/geo/geo.routes.js";
 import { questRoutes } from "./modules/quest/quest.routes.js";
 import { combatRoutes } from "./modules/combat/combat.routes.js";
 import { economyRoutes } from "./modules/economy/economy.routes.js";
+import { inventoryRoutes } from "./modules/inventory/inventory.routes.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
 import { errorHandler } from "./plugins/error-handler.js";
 import { WsHub } from "./modules/ws/ws.hub.js";
@@ -90,6 +91,7 @@ await server.register(geoRoutes, { prefix: "/api/v1/geo" });
 await server.register(questRoutes, { prefix: "/api/v1/quests" });
 await server.register(combatRoutes, { prefix: "/api/v1/combat" });
 await server.register(economyRoutes, { prefix: "/api/v1/economy" });
+await server.register(inventoryRoutes, { prefix: "/api/v1/inventory" });
 await server.register(mediaRoutes, { prefix: "/api/v1/media" });
 
 // ── Health check ──────────────────────────────────────────────────────────────

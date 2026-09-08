@@ -40,6 +40,8 @@ export const MeResponseSchema = z.object({
           id: z.string().uuid(),
           name: z.string(),
           inventoryCapacity: z.number().int(),
+          fame: z.number().int(),
+          denarii: z.number().int(),
         })
         .nullable(),
     })

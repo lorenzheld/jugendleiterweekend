@@ -73,7 +73,7 @@ Diese isolierten, chronologischen Epics sind so strukturiert, dass sie in vertik
 *   *Backend:* Append-only Ledger für Ruhm und Denare mit Idempotency-Keys.
 *   *Data:* Inventar-Modell (Persönlich max. 20, Team max. 40 Items).
 *   *Features:* Loot-Zuweisung nach Quest-Abschluss oder Enemy-`DEFEAT_ENEMY`-Schritt, Ausrüsten von Items (Werte-Berechnung via Ausrüstungs-Slots).
-*   *Handel:* Store-UI (gebundene an WorldObject-Typ STORE), Kauf/Verkauf (15% N-Item Regel), atomare Team-zu-Team Handels-Transaktion.
+*   *Handel:* Atomare Team-zu-Team Handels-Transaktion. Store‑UI und Kauf/Verkauf (inkl. 15%-Regel) werden für das Event weggelassen.
 
 ---
 

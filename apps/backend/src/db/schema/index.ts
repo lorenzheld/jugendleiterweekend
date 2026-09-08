@@ -6,6 +6,6 @@ export * from "./player.js";
 export * from "./world.js";
 export * from "./quest.js";
 export * from "./combat.js";
-export * from "./economy.js";
+export * from "./economy_v2.js";
 export * from "./media.js";
 export * from "./proximity.js";

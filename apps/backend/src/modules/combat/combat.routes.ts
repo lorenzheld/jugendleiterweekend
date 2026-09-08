@@ -128,7 +128,7 @@ export async function combatRoutes(server: FastifyInstance): Promise<void> {
 
     server.log.info(`WebSocket connected for combat ${id}`);
 
-    socket.on("message", (message) => {
+    socket.on("message", (message: unknown) => {
       server.log.debug(`Combat WS message: ${message}`);
     });
 

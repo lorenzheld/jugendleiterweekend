@@ -191,6 +191,17 @@ export const CompleteQuestResponseSchema = z.object({
   questRunId: z.string().uuid(),
   glory: z.number().int(),
   denarii: z.number().int(),
+  items: z
+    .array(
+      z.object({
+        defKey: z.string(),
+        quantity: z.number().int(),
+        owner: z.enum(["PLAYER", "TEAM"]),
+      }),
+    )
+    .optional()
+    .default([]),
+  itemsSkipped: z.boolean().optional(),
 });
 export type CompleteQuestResponse = z.infer<typeof CompleteQuestResponseSchema>;
 

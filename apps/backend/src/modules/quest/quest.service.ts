@@ -51,6 +51,11 @@ import type {
   QuestStepCompletedEvent,
   StepResult,
 } from "@jlw/contracts";
+import {
+  grantRewards,
+  QUEST_REWARD_PROFILE,
+  COMBAT_REWARD_PROFILE,
+} from "../economy/rewards.service.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -961,10 +966,15 @@ export async function completeQuest(opts: {
   accountId: string;
   questRunId: string;
   wsHub?: WsHub;
-}): Promise<{ glory: number; denarii: number }> {
+}): Promise<{
+  glory: number;
+  denarii: number;
+  items: { defKey: string; quantity: number; owner: "PLAYER" | "TEAM" }[];
+  itemsSkipped: boolean;
+}> {
   const { accountId, questRunId, wsHub } = opts;
 
-  const { teamId } = await resolvePlayer(accountId);
+  const { teamId, playerId } = await resolvePlayer(accountId);
 
   // Load QuestRun
   const [run] = await db
@@ -1017,23 +1027,23 @@ export async function completeQuest(opts: {
     throw err;
   }
 
-  // Mark QuestRun as COMPLETED
-  await db
-    .update(questRuns)
-    .set({ state: "COMPLETED", completedAt: new Date() })
-    .where(eq(questRuns.id, questRunId));
-
-  // Load quest title
   const [questDef] = await db
     .select({ title: questDefinitions.title })
     .from(questDefinitions)
     .where(eq(questDefinitions.id, run.questDefinitionId));
 
-  // Default rewards – will be replaced by Epic 6 (Economy) Ledger booking
-  const glory = 100;
-  const denarii = 50;
+  const granted = await grantRewards({
+    seed: `quest-complete:${questRunId}`,
+    teamId,
+    playerId,
+    profile: QUEST_REWARD_PROFILE,
+    source: "QUEST",
+  });
 
-  // TODO (Epic 6): await economyService.bookQuestRewards({ teamId, glory, denarii, questRunId });
+  await db
+    .update(questRuns)
+    .set({ state: "COMPLETED", completedAt: new Date() })
+    .where(eq(questRuns.id, questRunId));
 
   // Broadcast quest.completed to all team members
   if (wsHub) {
@@ -1042,14 +1052,14 @@ export async function completeQuest(opts: {
       teamId,
       questRunId,
       questTitle: questDef?.title ?? "Quest",
-      rewardGlory: glory,
-      rewardDenarii: denarii,
+      rewardGlory: granted.glory,
+      rewardDenarii: granted.denarii,
       timestamp: new Date().toISOString(),
     };
     wsHub.sendToTeam(teamId, event);
   }
 
-  return { glory, denarii };
+  return granted;
 }
 
 // ── Public: getSingleRun ──────────────────────────────────────────────────────
@@ -1112,4 +1122,108 @@ export async function getSingleRun(
     questType: row.quest_type,
     questDay: row.quest_day,
   });
+}
+
+// ── Public: resolveDefeatEnemy ────────────────────────────────────────────────
+
+/**
+ * Completes a DEFEAT_ENEMY objective (Epic 5 loot hook).
+ * Full combat resolution stays Epic 6; this grants combat loot and marks the step done.
+ */
+export async function resolveDefeatEnemy(opts: {
+  accountId: string;
+  questRunId: string;
+  stepId: string;
+  wsHub?: WsHub;
+}): Promise<StepResult> {
+  const { accountId, questRunId, stepId, wsHub } = opts;
+  const { teamId, playerId, playerName } = await resolvePlayer(accountId);
+
+  const [run] = await db
+    .select()
+    .from(questRuns)
+    .where(
+      and(
+        eq(questRuns.id, questRunId),
+        eq(questRuns.teamId, teamId),
+        eq(questRuns.state, "ACTIVE"),
+      ),
+    );
+
+  if (!run) {
+    const err = new Error("QuestRun not found or not active.") as Error & {
+      statusCode: number;
+    };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const [step] = await db
+    .select()
+    .from(questSteps)
+    .where(
+      and(
+        eq(questSteps.questDefinitionId, run.questDefinitionId),
+        eq(questSteps.stepId, stepId),
+        eq(questSteps.flowPhase, "OBJECTIVE"),
+        eq(questSteps.stepActionType, "DEFEAT_ENEMY"),
+      ),
+    );
+
+  if (!step) {
+    const err = new Error("Step not found or not a DEFEAT_ENEMY step.") as Error & {
+      statusCode: number;
+    };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const [currentProgress] = await db
+    .select()
+    .from(objectiveProgress)
+    .where(
+      and(
+        eq(objectiveProgress.questRunId, questRunId),
+        eq(objectiveProgress.objectiveId, stepId),
+      ),
+    );
+
+  if (currentProgress?.status === "COMPLETED") {
+    return {
+      stepId,
+      status: "COMPLETED",
+      message: "Dieser Schritt ist bereits abgeschlossen.",
+    };
+  }
+
+  const { allRequiredDone } = await completeObjectiveStep({
+    questRunId,
+    stepId,
+    stepActionType: "DEFEAT_ENEMY",
+    run,
+    playerName,
+    ...(wsHub ? { wsHub } : {}),
+  });
+
+  const granted = await grantRewards({
+    seed: `combat-loot:${questRunId}:${stepId}`,
+    teamId,
+    playerId,
+    profile: COMBAT_REWARD_PROFILE,
+    source: "COMBAT",
+  });
+
+  const lootNote = granted.itemsSkipped
+    ? " Inventar voll – Items konnten nicht aufgenommen werden."
+    : granted.items.length > 0
+      ? ` Beute: ${granted.items.map((i) => `${i.quantity}× ${i.defKey}`).join(", ")}.`
+      : "";
+
+  return {
+    stepId,
+    status: "COMPLETED",
+    message: `Gegner besiegt! +${granted.glory} Ruhm, +${granted.denarii} Denare.${lootNote}`,
+    questCompleted: allRequiredDone,
+    rewards: { glory: granted.glory, denarii: granted.denarii },
+  };
 }
