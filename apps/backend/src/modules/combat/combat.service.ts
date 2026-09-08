@@ -490,43 +490,41 @@ async function resolveRound(combatId: string, wsHub?: WsHub): Promise<CombatLog[
       const targetMaybe = combat.combatants.find((c) => c.id === action.targetId);
       if (!targetMaybe || targetMaybe.isDowned) continue;
       
-      const target = targetMaybe;
-
       // Calculate damage
-      const damage = calculateDamage(actor, target);
+      const damage = calculateDamage(actor, targetMaybe);
 
       // Apply damage
-      const newHp = Math.max(0, target.hpCurrent - damage);
+      const newHp = Math.max(0, targetMaybe.hpCurrent - damage);
       await db
         .update(combatants)
         .set({ hpCurrent: newHp })
-        .where(eq(combatants.id, target.id));
+        .where(eq(combatants.id, targetMaybe.id));
 
       logs.push({
         timestamp: new Date(),
-        message: `${actor.name} attacks ${target.name} for ${damage} damage!`,
+        message: `${actor.name} attacks ${targetMaybe.name} for ${damage} damage!`,
         type: "DAMAGE",
       });
 
       if (newHp <= 0) {
         logs.push({
           timestamp: new Date(),
-          message: `${target.name} is downed!`,
+          message: `${targetMaybe.name} is downed!`,
           type: "STATE",
         });
 
         // Update player status if player
-        if (target.entityType === "PLAYER") {
+        if (targetMaybe.entityType === "PLAYER") {
           await db
             .update(players)
             .set({ status: "DOWNED" })
-            .where(eq(players.id, target.entityId));
+            .where(eq(players.id, targetMaybe.entityId));
         }
       }
 
       // Update combatant in memory
-      target.hpCurrent = newHp;
-      target.isDowned = newHp <= 0;
+      targetMaybe.hpCurrent = newHp;
+      targetMaybe.isDowned = newHp <= 0;
     } else if (action.actionType === "DEFEND") {
       logs.push({
         timestamp: new Date(),
