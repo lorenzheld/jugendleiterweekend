@@ -962,11 +962,18 @@ async function escalatePvPChallenge(challengeId: string, wsHub?: WsHub): Promise
     .where(eq(pvpChallenges.id, challengeId));
 
   try {
-    await startPvPCombat({
-      attackerTeamId: challenge.attackerTeamId,
-      defenderTeamId: challenge.defenderTeamId,
-      wsHub,
-    });
+    if (wsHub) {
+      await startPvPCombat({
+        attackerTeamId: challenge.attackerTeamId,
+        defenderTeamId: challenge.defenderTeamId,
+        wsHub,
+      });
+    } else {
+      await startPvPCombat({
+        attackerTeamId: challenge.attackerTeamId,
+        defenderTeamId: challenge.defenderTeamId,
+      });
+    }
   } catch (err) {
     console.error("Failed to start PvP combat:", err);
   }
@@ -998,7 +1005,7 @@ async function startPvPCombat(opts: {
   }
 
   // Create combat instance
-  const [combat] = await db
+  const combatResults = await db
     .insert(combatInstances)
     .values({
       type: "PVP",
@@ -1006,6 +1013,11 @@ async function startPvPCombat(opts: {
       roundNumber: 0,
     })
     .returning();
+
+  const combat = combatResults[0];
+  if (!combat) {
+    throw new Error("Failed to create PvP combat instance");
+  }
 
   // Create combatants for both teams
   await Promise.all([
