@@ -6,7 +6,7 @@ import { ZodError } from "zod";
  */
 export function errorHandler(
   error: FastifyError,
-  _request: FastifyRequest,
+  request: FastifyRequest,
   reply: FastifyReply,
 ): void {
   // Zod validation errors → 400
@@ -70,10 +70,14 @@ export function errorHandler(
     return;
   }
 
-  // Fallback → 500
+  // Fallback → 500 (immer loggen, damit der echte Fehler sichtbar ist)
+  request.log.error({ err: error, stack: error.stack }, "Unhandled error");
   void reply.status(500).send({
     statusCode: 500,
     error: "Internal Server Error",
-    message: "An unexpected error occurred",
+    message:
+      process.env["NODE_ENV"] === "production"
+        ? "An unexpected error occurred"
+        : (error.message ?? "An unexpected error occurred"),
   });
 }
