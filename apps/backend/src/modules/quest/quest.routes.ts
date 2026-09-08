@@ -166,7 +166,10 @@ export async function questRoutes(server: FastifyInstance): Promise<void> {
         wsHub: server.wsHub,
       });
 
-      return reply.status(result.status === "COMPLETED" ? 200 : 422).send(result);
+      // Always return 200 – the StepResult.status field ("COMPLETED" | "FAILED")
+      // tells the client what happened. 422 is reserved for actual server errors,
+      // not for "player is still too far away" which is normal game feedback.
+      return reply.status(200).send(result);
     },
   );
 
@@ -198,7 +201,8 @@ export async function questRoutes(server: FastifyInstance): Promise<void> {
         requireAllMembersOnline: body.data.requireAllMembersOnline,
       });
 
-      return reply.status(result.status === "COMPLETED" ? 200 : 422).send(result);
+      // Same as /reach: always 200, use StepResult.status to distinguish outcomes.
+      return reply.status(200).send(result);
     },
   );
 
