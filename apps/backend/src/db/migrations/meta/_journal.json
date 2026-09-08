@@ -15,6 +15,20 @@
       "when": 1788933284000,
       "tag": "0001_epic2_geofencing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788933284001,
+      "tag": "0002_epic3_playarea",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788933284002,
+      "tag": "0003_epic4_quest_engine",
+      "breakpoints": true
     }
   ]
 }

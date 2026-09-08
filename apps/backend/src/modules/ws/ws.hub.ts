@@ -86,6 +86,30 @@ export class WsHub {
   // ── Broadcasting ─────────────────────────────────────────────────────────────
 
   /**
+   * Send any serialisable event to all connected members of a team.
+   * Used by quest, combat, and other modules that emit team-scoped events
+   * without being tied to the RadiusEvent shape.
+   *
+   * Silently skips sockets that are no longer OPEN.
+   */
+  sendToTeam<T>(teamId: string, event: T): void {
+    const room = this.rooms.get(teamId);
+    if (!room || room.size === 0) return;
+
+    const payload = JSON.stringify(event);
+    let sent = 0;
+
+    for (const ws of room) {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(payload);
+        sent++;
+      }
+    }
+
+    this.logger.debug({ teamId, sent }, "ws: sendToTeam");
+  }
+
+  /**
    * Send a RadiusEvent to all connected members of a team.
    * Silently skips sockets that are no longer OPEN.
    */

@@ -110,6 +110,8 @@ export const questRuns = pgTable("quest_run", {
   startedAt: timestamp("started_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  /** Set when state transitions to COMPLETED or FAILED. */
+  completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
 // ── ObjectiveProgress ─────────────────────────────────────────────────────────
@@ -122,7 +124,14 @@ export const objectiveProgress = pgTable("objective_progress", {
   objectiveId: varchar("objective_id", { length: 64 }).notNull(),
   status: varchar("status", { length: 32 }).notNull().default("PENDING"),
   progressCount: integer("progress_count").notNull().default(0),
-});
+},
+(table) => [
+  /** Unique per (quest_run, objective) so ON CONFLICT upserts work correctly. */
+  unique("uq_objective_progress_run_obj").on(
+    table.questRunId,
+    table.objectiveId,
+  ),
+]);
 
 // ── QuestStep ─────────────────────────────────────────────────────────────────
 

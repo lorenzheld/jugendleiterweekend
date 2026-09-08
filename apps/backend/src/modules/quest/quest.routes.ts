@@ -1,15 +1,222 @@
+/**
+ * Quest Routes – Epic 4
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Endpoints:
+ *   GET  /api/v1/quests              → active QuestRuns for the team
+ *   GET  /api/v1/quests/available    → discoverable quests in proximity
+ *   POST /api/v1/quests/accept       → accept a quest (slot ≤ 3)
+ *   GET  /api/v1/quests/runs/:runId  → single QuestRun detail
+ *   POST /api/v1/quests/runs/:runId/steps/:stepId/reach   → REACH_LOCATION
+ *   POST /api/v1/quests/runs/:runId/steps/:stepId/answer  → ANSWER_QUESTION/SOLVE_PUZZLE
+ *   POST /api/v1/quests/runs/:runId/complete              → COMPLETE quest
+ *
+ * Auth: JWT via `onRequest: [server.authenticate]`
+ * accountId is extracted from request.user.sub (standard JWT subject claim).
+ */
+
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
+import {
+  getActiveRuns,
+  getAvailableQuests,
+  acceptQuest,
+  validateReachLocation,
+  submitAnswer,
+  completeQuest,
+  getSingleRun,
+} from "./quest.service.js";
+import { db } from "../../db/client.js";
+import { players } from "../../db/schema/player.js";
+import { eq } from "drizzle-orm";
+
+// ── Zod request schemas ───────────────────────────────────────────────────────
+
+const AcceptBodySchema = z.object({
+  questDefinitionId: z.string().uuid(),
+});
+
+const ReachBodySchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracy: z.number().positive().max(500),
+});
+
+const AnswerBodySchema = z.object({
+  answer: z.string().min(1).max(512),
+  requireAllMembersOnline: z.boolean().optional().default(true),
+});
+
+// ── Internal helper ───────────────────────────────────────────────────────────
+
+async function resolveTeamId(accountId: string): Promise<string> {
+  const [player] = await db
+    .select({ teamId: players.teamId })
+    .from(players)
+    .where(eq(players.accountId, accountId));
+
+  if (!player) {
+    const err = new Error(
+      "No player record found for this account.",
+    ) as Error & { statusCode: number };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  return player.teamId;
+}
+
+// ── Route plugin ─────────────────────────────────────────────────────────────
 
 export async function questRoutes(server: FastifyInstance): Promise<void> {
-  /** GET /api/v1/quests – active quest runs for team */
-  server.get("/", async (_request, reply) => {
-    // TODO (Epic 3): fetch QuestRuns for authenticated team
-    return reply.status(501).send({ message: "Not implemented yet" });
-  });
 
-  /** POST /api/v1/quests/:id/accept – accept a quest (slot-check ≤3) */
-  server.post("/:id/accept", async (_request, reply) => {
-    // TODO (Epic 3): state-machine ACTIVE, enforce max 3 active quests
-    return reply.status(501).send({ message: "Not implemented yet" });
-  });
+  // ── GET /api/v1/quests ─────────────────────────────────────────────────────
+  server.get(
+    "/",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const teamId = await resolveTeamId(accountId);
+      const runs = await getActiveRuns(teamId);
+      return reply.send({ runs });
+    },
+  );
+
+  // ── GET /api/v1/quests/available ───────────────────────────────────────────
+  server.get(
+    "/available",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const teamId = await resolveTeamId(accountId);
+      const quests = await getAvailableQuests(teamId);
+      return reply.send({ quests });
+    },
+  );
+
+  // ── POST /api/v1/quests/accept ─────────────────────────────────────────────
+  server.post(
+    "/accept",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const body = AcceptBodySchema.safeParse(request.body);
+
+      if (!body.success) {
+        return reply.status(400).send({
+          message: "Invalid request body.",
+          errors: body.error.flatten(),
+        });
+      }
+
+      const { run, alreadyActive } = await acceptQuest({
+        accountId,
+        questDefinitionId: body.data.questDefinitionId,
+        wsHub: server.wsHub,
+      });
+
+      return reply.status(alreadyActive ? 200 : 201).send({ run, alreadyActive });
+    },
+  );
+
+  // ── GET /api/v1/quests/runs/:runId ─────────────────────────────────────────
+  server.get(
+    "/runs/:runId",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const { runId } = request.params as { runId: string };
+      const teamId = await resolveTeamId(accountId);
+      const run = await getSingleRun(runId, teamId);
+
+      if (!run) {
+        return reply.status(404).send({ message: "QuestRun not found." });
+      }
+
+      return reply.send({ run });
+    },
+  );
+
+  // ── POST /api/v1/quests/runs/:runId/steps/:stepId/reach ───────────────────
+  server.post(
+    "/runs/:runId/steps/:stepId/reach",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const { runId, stepId } = request.params as {
+        runId: string;
+        stepId: string;
+      };
+      const body = ReachBodySchema.safeParse(request.body);
+
+      if (!body.success) {
+        return reply.status(400).send({
+          message: "Invalid request body.",
+          errors: body.error.flatten(),
+        });
+      }
+
+      const result = await validateReachLocation({
+        accountId,
+        questRunId: runId,
+        stepId,
+        lat: body.data.lat,
+        lng: body.data.lng,
+        accuracy: body.data.accuracy,
+        wsHub: server.wsHub,
+      });
+
+      return reply.status(result.status === "COMPLETED" ? 200 : 422).send(result);
+    },
+  );
+
+  // ── POST /api/v1/quests/runs/:runId/steps/:stepId/answer ──────────────────
+  server.post(
+    "/runs/:runId/steps/:stepId/answer",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const { runId, stepId } = request.params as {
+        runId: string;
+        stepId: string;
+      };
+      const body = AnswerBodySchema.safeParse(request.body);
+
+      if (!body.success) {
+        return reply.status(400).send({
+          message: "Invalid request body.",
+          errors: body.error.flatten(),
+        });
+      }
+
+      const result = await submitAnswer({
+        accountId,
+        questRunId: runId,
+        stepId,
+        answer: body.data.answer,
+        wsHub: server.wsHub,
+        requireAllMembersOnline: body.data.requireAllMembersOnline,
+      });
+
+      return reply.status(result.status === "COMPLETED" ? 200 : 422).send(result);
+    },
+  );
+
+  // ── POST /api/v1/quests/runs/:runId/complete ──────────────────────────────
+  server.post(
+    "/runs/:runId/complete",
+    { onRequest: [server.authenticate] },
+    async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+      const { runId } = request.params as { runId: string };
+
+      const { glory, denarii } = await completeQuest({
+        accountId,
+        questRunId: runId,
+        wsHub: server.wsHub,
+      });
+
+      return reply.send({ questRunId: runId, glory, denarii });
+    },
+  );
 }

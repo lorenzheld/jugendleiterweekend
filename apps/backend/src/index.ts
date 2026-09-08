@@ -54,6 +54,33 @@ server.addHook("onClose", () => {
   wsHub.destroy();
 });
 
+// ── Body parsers ──────────────────────────────────────────────────────────────
+// Allow empty JSON bodies (e.g. POST /complete with no payload).
+server.addContentTypeParser(
+  "application/json",
+  { parseAs: "string" },
+  function (_req, body, done) {
+    if (!body || (body as string).trim() === "") {
+      done(null, {});
+      return;
+    }
+    try {
+      done(null, JSON.parse(body as string));
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  },
+);
+
+// Accept form-urlencoded and any other content-type on no-body routes (e.g. POST /complete).
+server.addContentTypeParser(
+  ["application/x-www-form-urlencoded", "text/plain"],
+  { parseAs: "string" },
+  function (_req, _body, done) {
+    done(null, {});
+  },
+);
+
 // ── Error handler ─────────────────────────────────────────────────────────────
 server.setErrorHandler(errorHandler);
 
@@ -83,3 +110,4 @@ try {
   server.log.error(err);
   process.exit(1);
 }
+

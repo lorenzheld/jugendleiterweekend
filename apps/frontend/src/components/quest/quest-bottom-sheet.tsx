@@ -1,0 +1,731 @@
+/**
+ * QuestBottomSheet
+ * ────────────────────────────────────────────────────────────────────────────
+ * Full-screen interaction sheet für alle Quest-Flow-Phasen.
+ *
+ * Modes (abhängig vom Prop `mode`):
+ *   "available"  → DISCOVER / DIALOGUE phase: Quest-Info + "Annehmen"-Button
+ *   "active"     → OBJECTIVE phase: aktueller Schritt + Eingabe (Answer / Reach)
+ *   "complete"   → Alle Objectives erledigt: "Abschließen"-Button + Belohnungs-Preview
+ *   "reward"     → Quest abgeschlossen: Belohnungs-Anzeige
+ *
+ * Team-Sync Indikator: Zeigt an ob alle Mitglieder online sind (für Answer-Steps).
+ *
+ * Design: dunkles Roman-Theme (#1a1a2e Hintergrund, #cd7f32 Gold-Akzent),
+ * Bottom-to-Top Slide-Animation via Tailwind.
+ */
+
+import { useState } from "react";
+import type { QuestAvailable, QuestRunDetail, StepResult } from "@jlw/contracts";
+
+// ── Props ─────────────────────────────────────────────────────────────────────
+
+interface QuestBottomSheetProps {
+  /** If set, shows an available (not-yet-accepted) quest in DISCOVER/DIALOGUE mode. */
+  availableQuest?: QuestAvailable | undefined;
+  /** If set, shows an active QuestRun in OBJECTIVE/COMPLETE mode. */
+  activeRun?: QuestRunDetail | undefined;
+  /** Current player GPS position for REACH_LOCATION steps. */
+  playerLat?: number | undefined;
+  playerLng?: number | undefined;
+  playerAccuracy?: number | undefined;
+  /** Callback when user taps "Annehmen" */
+  onAccept?: ((questDefinitionId: string) => Promise<void>) | undefined;
+  /** Callback when user submits an answer */
+  onSubmitAnswer?: ((
+    questRunId: string,
+    stepId: string,
+    answer: string,
+  ) => Promise<StepResult>) | undefined;
+  /** Callback when user confirms REACH_LOCATION */
+  onConfirmReach?: ((
+    questRunId: string,
+    stepId: string,
+  ) => Promise<StepResult>) | undefined;
+  /** Callback when user taps "Quest abschließen" */
+  onComplete?: ((questRunId: string) => Promise<{ glory: number; denarii: number }>) | undefined;
+  /** Close the sheet */
+  onClose: () => void;
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function QuestBottomSheet({
+  availableQuest,
+  activeRun,
+  playerLat,
+  playerLng,
+  playerAccuracy,
+  onAccept,
+  onSubmitAnswer,
+  onConfirmReach,
+  onComplete,
+  onClose,
+}: QuestBottomSheetProps) {
+  const [answerInput, setAnswerInput] = useState("");
+  const [feedback, setFeedback] = useState<{
+    text: string;
+    ok: boolean;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [reward, setReward] = useState<{
+    glory: number;
+    denarii: number;
+  } | null>(null);
+
+  // ── Determine mode ──────────────────────────────────────────────────────────
+  const allDone =
+    activeRun &&
+    activeRun.objectives.filter((o) => o.required).length > 0 &&
+    activeRun.objectives
+      .filter((o) => o.required)
+      .every((o) => o.progress?.status === "COMPLETED");
+
+  const mode: "available" | "active" | "complete" | "reward" = reward
+    ? "reward"
+    : availableQuest
+      ? "available"
+      : allDone
+        ? "complete"
+        : "active";
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
+  async function handleAccept() {
+    if (!availableQuest || !onAccept) return;
+    setIsLoading(true);
+    try {
+      await onAccept(availableQuest.questDefinitionId);
+      onClose();
+    } catch (e) {
+      setFeedback({ text: (e as Error).message, ok: false });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleAnswer() {
+    if (!activeRun?.currentStep || !onSubmitAnswer) return;
+    if (!answerInput.trim()) return;
+
+    setIsLoading(true);
+    setFeedback(null);
+
+    try {
+      const result = await onSubmitAnswer(
+        activeRun.id,
+        activeRun.currentStep.stepId,
+        answerInput.trim(),
+      );
+
+      setFeedback({
+        text: result.message,
+        ok: result.status === "COMPLETED",
+      });
+
+      if (result.status === "COMPLETED") {
+        setAnswerInput("");
+      }
+    } catch (e) {
+      setFeedback({ text: (e as Error).message, ok: false });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleReach() {
+    if (!activeRun?.currentStep || !onConfirmReach) return;
+    if (playerLat == null || playerLng == null) {
+      setFeedback({ text: "GPS-Position nicht verfügbar.", ok: false });
+      return;
+    }
+
+    setIsLoading(true);
+    setFeedback(null);
+
+    try {
+      const result = await onConfirmReach(
+        activeRun.id,
+        activeRun.currentStep.stepId,
+      );
+
+      setFeedback({
+        text: result.message,
+        ok: result.status === "COMPLETED",
+      });
+    } catch (e) {
+      setFeedback({ text: (e as Error).message, ok: false });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleComplete() {
+    if (!activeRun || !onComplete) return;
+    setIsLoading(true);
+    setFeedback(null);
+
+    try {
+      const rewards = await onComplete(activeRun.id);
+      setReward(rewards);
+    } catch (e) {
+      setFeedback({ text: (e as Error).message, ok: false });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 z-30 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Sheet */}
+      <div
+        className="absolute bottom-0 left-0 right-0 z-40
+                   rounded-t-3xl bg-[#1a1a2e] border-t border-[#cd7f32]/30
+                   px-5 py-6 shadow-2xl
+                   animate-in slide-in-from-bottom duration-300"
+      >
+        {/* Drag handle */}
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+
+        {/* ── MODE: reward ──────────────────────────────────────────────────── */}
+        {mode === "reward" && reward && (
+          <RewardView
+            questTitle={activeRun?.questTitle ?? "Quest"}
+            glory={reward.glory}
+            denarii={reward.denarii}
+            onClose={onClose}
+          />
+        )}
+
+        {/* ── MODE: available ───────────────────────────────────────────────── */}
+        {mode === "available" && availableQuest && (
+          <AvailableView
+            quest={availableQuest}
+            isLoading={isLoading}
+            feedback={feedback}
+            onAccept={handleAccept}
+            onClose={onClose}
+          />
+        )}
+
+        {/* ── MODE: active ──────────────────────────────────────────────────── */}
+        {mode === "active" && activeRun && (
+          <ActiveView
+            run={activeRun}
+            answerInput={answerInput}
+            setAnswerInput={setAnswerInput}
+            isLoading={isLoading}
+            feedback={feedback}
+            playerLat={playerLat}
+            playerLng={playerLng}
+            playerAccuracy={playerAccuracy}
+            onAnswer={handleAnswer}
+            onReach={handleReach}
+            onClose={onClose}
+          />
+        )}
+
+        {/* ── MODE: complete ────────────────────────────────────────────────── */}
+        {mode === "complete" && activeRun && (
+          <CompleteView
+            run={activeRun}
+            isLoading={isLoading}
+            feedback={feedback}
+            onComplete={handleComplete}
+            onClose={onClose}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
+// ── Sub-views ─────────────────────────────────────────────────────────────────
+
+// ── Available view ────────────────────────────────────────────────────────────
+
+function AvailableView({
+  quest,
+  isLoading,
+  feedback,
+  onAccept,
+  onClose,
+}: {
+  quest: QuestAvailable;
+  isLoading: boolean;
+  feedback: { text: string; ok: boolean } | null;
+  onAccept: () => void;
+  onClose: () => void;
+}) {
+  const isDialogue = quest.discoveryPhase === "DIALOGUE";
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold tracking-widest text-[#cd7f32] uppercase">
+              {isDialogue ? "💬 Quest verfügbar" : "🗺 Quest entdeckt"}
+            </span>
+            <QuestTypeBadge type={quest.type} />
+          </div>
+          <h2 className="text-lg font-bold text-[#f4e4c1]">{quest.title}</h2>
+          {quest.day && (
+            <p className="text-xs text-white/40 mt-0.5">
+              {formatDay(quest.day)}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="text-white/40 hover:text-white/70 text-xl leading-none"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Location info */}
+      <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+        <span className="text-base">📍</span>
+        <div>
+          <p className="text-xs text-white/60">Gestartet bei</p>
+          <p className="text-sm font-medium text-[#f4e4c1]">
+            {quest.triggerObjectName}
+          </p>
+        </div>
+      </div>
+
+      {/* Phase hint */}
+      {isDialogue && (
+        <p className="text-sm text-[#f4e4c1]/70 leading-relaxed">
+          Ihr seid in Reichweite. Nehmt die Quest an um sie im Slot zu aktivieren.
+          <span className="block mt-1 text-[10px] text-white/30">
+            ⚠ Max. 3 aktive Quests gleichzeitig.
+          </span>
+        </p>
+      )}
+      {!isDialogue && (
+        <p className="text-sm text-white/40 leading-relaxed">
+          Kommt näher um die Quest anzunehmen.
+        </p>
+      )}
+
+      {/* Feedback */}
+      {feedback && (
+        <FeedbackBanner ok={feedback.ok} text={feedback.text} />
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-3 pt-1">
+        <button
+          onClick={onClose}
+          className="flex-1 rounded-xl border border-white/15 py-3 text-sm
+                     text-white/60 hover:bg-white/5 transition"
+        >
+          Schließen
+        </button>
+        {isDialogue && (
+          <button
+            onClick={onAccept}
+            disabled={isLoading}
+            className="flex-1 rounded-xl bg-[#cd7f32] py-3 text-sm font-bold
+                       text-[#1a1a2e] hover:bg-[#b8712d] disabled:opacity-50
+                       transition active:scale-95"
+          >
+            {isLoading ? "Laden…" : "Quest annehmen ⚔"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Active view ───────────────────────────────────────────────────────────────
+
+function ActiveView({
+  run,
+  answerInput,
+  setAnswerInput,
+  isLoading,
+  feedback,
+  playerLat,
+  playerLng,
+  playerAccuracy,
+  onAnswer,
+  onReach,
+  onClose,
+}: {
+  run: QuestRunDetail;
+  answerInput: string;
+  setAnswerInput: (v: string) => void;
+  isLoading: boolean;
+  feedback: { text: string; ok: boolean } | null;
+  playerLat?: number | undefined;
+  playerLng?: number | undefined;
+  playerAccuracy?: number | undefined;
+  onAnswer: () => void;
+  onReach: () => void;
+  onClose: () => void;
+}) {
+  const step = run.currentStep;
+  const done = run.objectives.filter(
+    (o) => o.required && o.progress?.status === "COMPLETED",
+  ).length;
+  const total = run.objectives.filter((o) => o.required).length;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-bold tracking-widest text-[#cd7f32] uppercase mb-1">
+            ⚔ Aktive Quest
+          </p>
+          <h2 className="text-base font-bold text-[#f4e4c1]">{run.questTitle}</h2>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-white/40 hover:text-white/70 text-xl leading-none"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <ProgressBar done={done} total={total} />
+
+      {/* Current step */}
+      {step && (
+        <div className="rounded-xl bg-white/5 border border-white/10 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{stepEmoji(step.stepActionType)}</span>
+            <div>
+              <p className="text-[10px] text-white/40 uppercase tracking-wide">
+                Schritt {step.sequence}
+              </p>
+              <p className="text-sm font-semibold text-[#f4e4c1]">
+                {stepLabel(step.stepActionType)}
+              </p>
+            </div>
+          </div>
+
+          {/* REACH_LOCATION */}
+          {step.stepActionType === "REACH_LOCATION" && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-white/50">
+                GPS: {playerLat != null ? `${playerLat.toFixed(5)}, ${playerLng?.toFixed(5)}` : "wird ermittelt…"}{" "}
+                {playerAccuracy != null && `(±${Math.round(playerAccuracy)} m)`}
+              </p>
+              <button
+                onClick={onReach}
+                disabled={isLoading || playerLat == null}
+                className="w-full rounded-xl bg-[#cd7f32] py-3 text-sm font-bold
+                           text-[#1a1a2e] disabled:opacity-50 transition active:scale-95
+                           hover:bg-[#b8712d]"
+              >
+                {isLoading ? "Prüfe Position…" : "📍 Standort bestätigen"}
+              </button>
+            </div>
+          )}
+
+          {/* ANSWER_QUESTION / SOLVE_PUZZLE */}
+          {(step.stepActionType === "ANSWER_QUESTION" ||
+            step.stepActionType === "SOLVE_PUZZLE") && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-white/50">
+                💡 Team-Sync erforderlich – alle müssen online sein.
+              </p>
+              <input
+                type="text"
+                value={answerInput}
+                onChange={(e) => setAnswerInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void onAnswer()}
+                placeholder="Eure Antwort eingeben…"
+                className="w-full rounded-xl bg-white/10 border border-white/20
+                           px-4 py-3 text-sm text-[#f4e4c1] placeholder:text-white/30
+                           focus:border-[#cd7f32] focus:outline-none"
+              />
+              <button
+                onClick={onAnswer}
+                disabled={isLoading || !answerInput.trim()}
+                className="w-full rounded-xl bg-[#cd7f32] py-3 text-sm font-bold
+                           text-[#1a1a2e] disabled:opacity-50 transition active:scale-95
+                           hover:bg-[#b8712d]"
+              >
+                {isLoading ? "Prüfe Antwort…" : "✓ Antwort abschicken"}
+              </button>
+            </div>
+          )}
+
+          {/* DEFEAT_ENEMY */}
+          {step.stepActionType === "DEFEAT_ENEMY" && (
+            <p className="text-xs text-white/50">
+              ⚔️ Besiegt den Gegner um diesen Schritt abzuschließen. (Epic 5)
+            </p>
+          )}
+
+          {/* UPLOAD_MEDIA */}
+          {step.stepActionType === "UPLOAD_MEDIA" && (
+            <p className="text-xs text-white/50">
+              📸 Ladet ein Foto hoch um diesen Schritt abzuschließen. (Epic 8)
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Feedback */}
+      {feedback && <FeedbackBanner ok={feedback.ok} text={feedback.text} />}
+
+      {/* Objectives overview */}
+      <ObjectivesList objectives={run.objectives} />
+    </div>
+  );
+}
+
+// ── Complete view ─────────────────────────────────────────────────────────────
+
+function CompleteView({
+  run,
+  isLoading,
+  feedback,
+  onComplete,
+  onClose,
+}: {
+  run: QuestRunDetail;
+  isLoading: boolean;
+  feedback: { text: string; ok: boolean } | null;
+  onComplete: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-bold tracking-widest text-green-400 uppercase mb-1">
+            ✓ Alle Schritte erledigt!
+          </p>
+          <h2 className="text-base font-bold text-[#f4e4c1]">
+            {run.questTitle}
+          </h2>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-white/40 hover:text-white/70 text-xl leading-none"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="rounded-xl bg-green-900/20 border border-green-500/20 p-4">
+        <p className="text-sm text-green-300">
+          💬 Kehrt zum Quest-Geber zurück und schließt die Quest ab.
+        </p>
+        <p className="text-xs text-white/30 mt-2">
+          Belohnungen: Ruhm + Denare
+        </p>
+      </div>
+
+      {feedback && <FeedbackBanner ok={feedback.ok} text={feedback.text} />}
+
+      <div className="flex gap-3">
+        <button
+          onClick={onClose}
+          className="flex-1 rounded-xl border border-white/15 py-3 text-sm
+                     text-white/60 hover:bg-white/5 transition"
+        >
+          Zurück
+        </button>
+        <button
+          onClick={onComplete}
+          disabled={isLoading}
+          className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-bold
+                     text-white disabled:opacity-50 transition active:scale-95
+                     hover:bg-green-500"
+        >
+          {isLoading ? "Laden…" : "🏆 Quest abschließen"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Reward view ───────────────────────────────────────────────────────────────
+
+function RewardView({
+  questTitle,
+  glory,
+  denarii,
+  onClose,
+}: {
+  questTitle: string;
+  glory: number;
+  denarii: number;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-5 py-4">
+      <div className="text-4xl animate-bounce">🏆</div>
+      <div className="text-center">
+        <p className="text-xs text-[#cd7f32] uppercase tracking-widest font-bold">
+          Quest abgeschlossen!
+        </p>
+        <h2 className="text-lg font-bold text-[#f4e4c1] mt-1">{questTitle}</h2>
+      </div>
+
+      {/* Rewards */}
+      <div className="flex gap-6">
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-2xl">⭐</span>
+          <span className="text-lg font-bold text-[#cd7f32]">+{glory}</span>
+          <span className="text-xs text-white/40">Ruhm</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-2xl">🪙</span>
+          <span className="text-lg font-bold text-[#cd7f32]">+{denarii}</span>
+          <span className="text-xs text-white/40">Denare</span>
+        </div>
+      </div>
+
+      <button
+        onClick={onClose}
+        className="w-full rounded-xl bg-[#cd7f32] py-3 text-sm font-bold
+                   text-[#1a1a2e] hover:bg-[#b8712d] transition active:scale-95"
+      >
+        Schließen ✕
+      </button>
+    </div>
+  );
+}
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+
+function ProgressBar({ done, total }: { done: number; total: number }) {
+  if (total === 0) return null;
+  const pct = Math.round((done / total) * 100);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-[#cd7f32] transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-[10px] text-white/40 shrink-0">
+        {done}/{total}
+      </span>
+    </div>
+  );
+}
+
+function ObjectivesList({
+  objectives,
+}: {
+  objectives: QuestRunDetail["objectives"];
+}) {
+  const required = objectives.filter((o) => o.required);
+  if (required.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[10px] text-white/30 uppercase tracking-wide">
+        Alle Schritte
+      </p>
+      {required.map((obj) => {
+        const done = obj.progress?.status === "COMPLETED";
+        return (
+          <div
+            key={obj.stepId}
+            className={[
+              "flex items-center gap-2 rounded-lg px-3 py-2",
+              done ? "bg-green-900/20" : "bg-white/5",
+            ].join(" ")}
+          >
+            <span className="text-sm">{done ? "✓" : stepEmoji(obj.stepActionType)}</span>
+            <span
+              className={[
+                "text-xs",
+                done ? "text-green-400 line-through" : "text-[#f4e4c1]/70",
+              ].join(" ")}
+            >
+              {stepLabel(obj.stepActionType)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FeedbackBanner({ ok, text }: { ok: boolean; text: string }) {
+  return (
+    <div
+      className={[
+        "rounded-xl px-4 py-3 text-sm font-medium",
+        ok
+          ? "bg-green-900/40 border border-green-500/30 text-green-300"
+          : "bg-red-900/40 border border-red-500/30 text-red-300",
+      ].join(" ")}
+    >
+      {ok ? "✓ " : "✗ "}
+      {text}
+    </div>
+  );
+}
+
+function QuestTypeBadge({ type }: { type: string }) {
+  if (type === "HIDDEN") {
+    return (
+      <span className="rounded-full bg-purple-900/40 border border-purple-500/30 px-2 py-0.5 text-[10px] text-purple-300">
+        Verborgen
+      </span>
+    );
+  }
+  if (type === "LONG_TERM") {
+    return (
+      <span className="rounded-full bg-blue-900/40 border border-blue-500/30 px-2 py-0.5 text-[10px] text-blue-300">
+        Lang
+      </span>
+    );
+  }
+  return null;
+}
+
+function stepEmoji(actionType: string): string {
+  switch (actionType) {
+    case "REACH_LOCATION":     return "📍";
+    case "ANSWER_QUESTION":    return "❓";
+    case "SOLVE_PUZZLE":       return "🧩";
+    case "DEFEAT_ENEMY":       return "⚔️";
+    case "UPLOAD_MEDIA":       return "📸";
+    case "TALK_TO_NPC":        return "💬";
+    case "ACCEPT_QUEST":       return "✋";
+    default:                   return "▶";
+  }
+}
+
+function stepLabel(actionType: string): string {
+  switch (actionType) {
+    case "REACH_LOCATION":     return "Ort erreichen";
+    case "ANSWER_QUESTION":    return "Frage beantworten";
+    case "SOLVE_PUZZLE":       return "Rätsel lösen";
+    case "DEFEAT_ENEMY":       return "Gegner besiegen";
+    case "UPLOAD_MEDIA":       return "Foto hochladen";
+    case "TALK_TO_NPC":        return "Mit NPC sprechen";
+    case "ACCEPT_QUEST":       return "Quest annehmen";
+    case "TEAM_DECISION":      return "Team-Entscheidung";
+    default:                   return actionType;
+  }
+}
+
+function formatDay(day: string): string {
+  return day.replace("DAY_", "Tag ").replace("_", " ");
+}

@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api.js";
 import type {
   WorldObjectNearby,
@@ -27,6 +27,7 @@ import type {
   RadiusEvent,
 } from "@jlw/contracts";
 import type { GeoPosition } from "./use-geolocation.js";
+import { isQuestEvent, handleQuestWsEvent } from "./use-quests.js";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -115,6 +116,7 @@ export function useWorldObjects(
   // ── 3. WebSocket for real-time zone updates ────────────────────────────────
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!token) return;
@@ -173,6 +175,13 @@ export function useWorldObjects(
               // the next REST poll will pick it up.
               return next;
             });
+
+          } else if (isQuestEvent(msg as { event: string })) {
+            // Forward quest WS events to the quest query cache
+            handleQuestWsEvent(
+              msg as Parameters<typeof handleQuestWsEvent>[0],
+              queryClient,
+            );
           }
         } catch {
           // Non-JSON frame – ignore
