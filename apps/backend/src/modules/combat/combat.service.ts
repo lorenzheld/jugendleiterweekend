@@ -446,7 +446,8 @@ async function resolveRound(combatId: string, wsHub?: WsHub): Promise<CombatLog[
     );
 
     if (alivePlayers.length > 0) {
-      const target = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+      const targetPlayer = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+      if (!targetPlayer) continue;
 
       const [aiAction] = await db
         .insert(combatActions)
@@ -455,7 +456,7 @@ async function resolveRound(combatId: string, wsHub?: WsHub): Promise<CombatLog[
           roundNumber: combat.roundNumber,
           actorId: enemy.id,
           actionType: "ATTACK",
-          targetId: target.id,
+          targetId: targetPlayer.id,
           isLocked: true,
           idempotencyKey: randomUUID(),
         })
