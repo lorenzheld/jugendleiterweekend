@@ -1,0 +1,170 @@
+/**
+ * Auth Service
+ * ------------
+ * Handles access-code verification, session persistence, and the /me query.
+ *
+ * Hashing strategy: Node.js built-in `crypto.scrypt` – no extra dependencies.
+ * Hash storage format: `scrypt:<saltHex>:<keyHex>`
+ */
+
+import crypto from "node:crypto";
+import { promisify } from "node:util";
+import { eq } from "drizzle-orm";
+import { db } from "../../db/client.js";
+import { accounts, sessions } from "../../db/schema/account.js";
+import { players, teams } from "../../db/schema/player.js";
+import type { MeResponse } from "@jlw/contracts";
+
+const scryptAsync = promisify<
+  crypto.BinaryLike,
+  crypto.BinaryLike,
+  number,
+  crypto.ScryptOptions,
+  Buffer
+>(crypto.scrypt);
+
+// ── Scrypt parameters (OWASP recommended minimum) ────────────────────────────
+const SCRYPT_N = 16384;
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+const KEY_LEN = 64;
+const SCRYPT_OPTS: crypto.ScryptOptions = { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P };
+
+// ── Hashing ───────────────────────────────────────────────────────────────────
+
+/**
+ * Hash an access code for storage.
+ * Returns a string of the form `scrypt:<saltHex>:<keyHex>`.
+ */
+export async function hashAccessCode(code: string): Promise<string> {
+  const salt = crypto.randomBytes(16);
+  const key = await scryptAsync(code, salt, KEY_LEN, SCRYPT_OPTS);
+  return `scrypt:${salt.toString("hex")}:${key.toString("hex")}`;
+}
+
+/**
+ * Timing-safe verification of a plain-text access code against a stored hash.
+ * Returns `false` for any malformed hash to prevent information leakage.
+ */
+export async function verifyAccessCode(
+  code: string,
+  stored: string,
+): Promise<boolean> {
+  const parts = stored.split(":");
+  if (parts.length !== 3 || parts[0] !== "scrypt") return false;
+
+  const [, saltHex, keyHex] = parts as [string, string, string];
+  try {
+    const salt = Buffer.from(saltHex, "hex");
+    const expected = Buffer.from(keyHex, "hex");
+    const actual = await scryptAsync(code, salt, KEY_LEN, SCRYPT_OPTS);
+    // timingSafeEqual prevents timing attacks even if lengths differ
+    return expected.length === actual.length
+      ? crypto.timingSafeEqual(actual, expected)
+      : false;
+  } catch {
+    // Malformed hex or other unexpected error → treat as invalid
+    return false;
+  }
+}
+
+// ── Account lookup ────────────────────────────────────────────────────────────
+
+/**
+ * Scan all accounts and find the one whose accessCodeHash matches the
+ * supplied plain-text code. Returns `null` if not found.
+ *
+ * NOTE: For ~13 players this full-scan is perfectly acceptable.
+ *       A future migration can add an index on a deterministic code prefix
+ *       if the user base grows.
+ */
+export async function findAccountByAccessCode(
+  accessCode: string,
+): Promise<(typeof accounts.$inferSelect) | null> {
+  const all = await db.select().from(accounts);
+
+  for (const account of all) {
+    const valid = await verifyAccessCode(accessCode, account.accessCodeHash);
+    if (valid) return account;
+  }
+
+  return null;
+}
+
+// ── Session management ────────────────────────────────────────────────────────
+
+/** Persist a new session. The `token` field stores the signed JWT string. */
+export async function createSession(opts: {
+  accountId: string;
+  token: string;
+  deviceId?: string;
+}): Promise<void> {
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+  await db.insert(sessions).values({
+    accountId: opts.accountId,
+    token: opts.token,
+    deviceId: opts.deviceId ?? null,
+    expiresAt,
+  });
+}
+
+/**
+ * Invalidate a session by its token (JWT string).
+ * Safe to call even if the session does not exist (e.g. already expired).
+ */
+export async function deleteSession(token: string): Promise<void> {
+  await db.delete(sessions).where(eq(sessions.token, token));
+}
+
+// ── /me aggregation ───────────────────────────────────────────────────────────
+
+/**
+ * Aggregates account + optional player + optional team into the MeResponse
+ * shape used by both the lobby and the map header.
+ */
+export async function getMe(accountId: string): Promise<MeResponse> {
+  // Fetch account
+  const [account] = await db
+    .select()
+    .from(accounts)
+    .where(eq(accounts.id, accountId));
+
+  if (!account) {
+    const err = new Error("Account not found") as Error & { statusCode: number };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Try to find a linked player record (GMs/admins may not have one)
+  const [player] = await db
+    .select()
+    .from(players)
+    .where(eq(players.accountId, accountId));
+
+  if (!player) {
+    return {
+      account: { id: account.id, username: account.username, role: account.role },
+      player: null,
+    };
+  }
+
+  // Fetch the player's team
+  const [team] = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.id, player.teamId));
+
+  return {
+    account: { id: account.id, username: account.username, role: account.role },
+    player: {
+      id: player.id,
+      class: player.class,
+      hpCurrent: player.hpCurrent,
+      status: player.status,
+      team: team
+        ? { id: team.id, name: team.name, inventoryCapacity: team.inventoryCapacity }
+        : null,
+    },
+  };
+}

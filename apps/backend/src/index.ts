@@ -14,7 +14,6 @@ import { combatRoutes } from "./modules/combat/combat.routes.js";
 import { economyRoutes } from "./modules/economy/economy.routes.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
 import { errorHandler } from "./plugins/error-handler.js";
-import "./types/fastify.js";
 
 const HOST = process.env["HOST"] ?? "0.0.0.0";
 const PORT = Number(process.env["PORT"] ?? 3000);

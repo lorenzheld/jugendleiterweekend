@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PlayerClassSchema, PlayerStatusSchema } from "./player.js";
 
 export const RoleSchema = z.enum(["PLAYER", "GM", "ADMIN"]);
 export type Role = z.infer<typeof RoleSchema>;
@@ -17,3 +18,31 @@ export const LoginResponseSchema = z.object({
   }),
 });
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+
+// ── /me endpoint ─────────────────────────────────────────────────────────────
+
+/** Full profile returned by GET /api/v1/auth/me */
+export const MeResponseSchema = z.object({
+  account: z.object({
+    id: z.string().uuid(),
+    username: z.string(),
+    role: RoleSchema,
+  }),
+  /** Null for GM/ADMIN accounts that have no player record. */
+  player: z
+    .object({
+      id: z.string().uuid(),
+      class: PlayerClassSchema,
+      hpCurrent: z.number().int().nonnegative(),
+      status: PlayerStatusSchema,
+      team: z
+        .object({
+          id: z.string().uuid(),
+          name: z.string(),
+          inventoryCapacity: z.number().int(),
+        })
+        .nullable(),
+    })
+    .nullable(),
+});
+export type MeResponse = z.infer<typeof MeResponseSchema>;
