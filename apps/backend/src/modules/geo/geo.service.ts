@@ -20,6 +20,7 @@ import { db } from "../../db/client.js";
 import { players } from "../../db/schema/player.js";
 import { worldObjects, playAreas } from "../../db/schema/world.js";
 import { playerProximityStates } from "../../db/schema/proximity.js";
+import { questRuns, questSteps } from "../../db/schema/quest.js";
 import {
   evaluateZones,
   computeExitTransitions,
@@ -33,6 +34,7 @@ import type {
   RadiusEvent,
   PlayArea,
 } from "@jlw/contracts";
+import { startPvECombat, getActiveCombatForTeam } from "../combat/combat.service.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -257,6 +259,19 @@ export async function updatePlayerLocation(opts: {
     }
   }
 
+  // ── 8. Check for PvE encounter trigger (Epic 6) ───────────────────────────
+  // If a team enters AGGRO radius of an ENEMY and has an active DEFEAT_ENEMY quest step,
+  // start a combat instance.
+  if (changed.length > 0) {
+    await checkPvEEncounterTrigger({
+      playerId: player.id,
+      teamId: player.teamId,
+      transitions: changed,
+      nearbyObjects: nearbyAsSpatial,
+      wsHub,
+    });
+  }
+
   return {
     playerId: player.id,
     lat,
@@ -466,6 +481,106 @@ export async function checkEffectiveDistance(opts: {
   const withinRange = effectiveDistanceM <= targetRadius;
 
   return { actualDistanceM, effectiveDistanceM, withinRange };
+}
+
+// ── PvE Encounter Trigger (Epic 6) ────────────────────────────────────────────
+
+/**
+ * Check if any zone transition triggers a PvE combat encounter.
+ * Called after location update when a player enters an enemy aggro radius.
+ */
+async function checkPvEEncounterTrigger(opts: {
+  playerId: string;
+  teamId: string;
+  transitions: Array<{
+    worldObjectId: string;
+    newZone: ProximityZone;
+    previousZone: ProximityZone;
+  }>;
+  nearbyObjects: Array<SpatialWorldObject & { actualDistanceM: number }>;
+  wsHub?: WsHub;
+}): Promise<void> {
+  const { playerId, teamId, transitions, nearbyObjects, wsHub } = opts;
+
+  // Check if team already in combat
+  const existingCombat = await getActiveCombatForTeam(teamId);
+  if (existingCombat) {
+    return; // Already in combat, don't trigger another
+  }
+
+  // Find any AGGRO transitions for ENEMY objects
+  const aggroTransitions = transitions.filter(
+    (t) =>
+      t.newZone === "AGGRO" &&
+      (t.previousZone === "OUTSIDE" ||
+        t.previousZone === "DISCOVERY" ||
+        t.previousZone === "INTERACTION")
+  );
+
+  if (aggroTransitions.length === 0) {
+    return;
+  }
+
+  // Check if team has an active DEFEAT_ENEMY quest step
+  const activeQuests = await db
+    .select({
+      questRunId: questRuns.id,
+      questDefId: questRuns.questDefinitionId,
+    })
+    .from(questRuns)
+    .where(and(eq(questRuns.teamId, teamId), eq(questRuns.state, "ACTIVE")));
+
+  if (activeQuests.length === 0) {
+    return; // No active quests
+  }
+
+  // Check if any active quest has a DEFEAT_ENEMY step
+  const questDefIds = activeQuests.map((q) => q.questDefId);
+  const defeatEnemySteps = await db
+    .select({
+      stepId: questSteps.stepId,
+      targetRef: questSteps.targetRef,
+    })
+    .from(questSteps)
+    .where(
+      and(
+        inArray(questSteps.questDefinitionId, questDefIds),
+        eq(questSteps.stepActionType, "DEFEAT_ENEMY"),
+        eq(questSteps.flowPhase, "OBJECTIVE")
+      )
+    );
+
+  if (defeatEnemySteps.length === 0) {
+    return; // No DEFEAT_ENEMY steps in active quests
+  }
+
+  // Match enemy encounter to quest step target_ref
+  for (const transition of aggroTransitions) {
+    const enemy = nearbyObjects.find((o) => o.id === transition.worldObjectId);
+    if (!enemy || enemy.type !== "ENEMY") continue;
+
+    // Check if this enemy matches any DEFEAT_ENEMY target_ref
+    const matchingStep = defeatEnemySteps.find(
+      (s) => s.targetRef === enemy.externalId
+    );
+
+    if (matchingStep) {
+      try {
+        // Start PvE combat!
+        await startPvECombat({
+          teamId,
+          enemyWorldObjectId: enemy.id,
+          wsHub,
+        });
+
+        // Combat started successfully, no need to check other transitions
+        return;
+      } catch (err) {
+        // Log error but don't throw - location update should still succeed
+        console.error(`Failed to start PvE combat for team ${teamId}:`, err);
+      }
+    }
+  }
 }
 
 // ── Play areas ─────────────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ import { teams } from "./player.js";
 
 export const combatTypeEnum = pgEnum("combat_type", ["PVE", "PVP", "BOSS"]);
 export const combatStateEnum = pgEnum("combat_state", [
+  "INITIALIZING",
   "AWAITING_ACTIONS",
   "LOCKED",
   "RESOLVING",

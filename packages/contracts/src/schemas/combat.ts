@@ -1,9 +1,16 @@
+/**
+ * Combat Contracts – shared Zod schemas for Epic 6 Combat System.
+ */
+
 import { z } from "zod";
+
+// ── Enums ─────────────────────────────────────────────────────────────────────
 
 export const CombatTypeSchema = z.enum(["PVE", "PVP", "BOSS"]);
 export type CombatType = z.infer<typeof CombatTypeSchema>;
 
 export const CombatStateSchema = z.enum([
+  "INITIALIZING",
   "AWAITING_ACTIONS",
   "LOCKED",
   "RESOLVING",
@@ -11,28 +18,139 @@ export const CombatStateSchema = z.enum([
 ]);
 export type CombatState = z.infer<typeof CombatStateSchema>;
 
-export const CombatActionTypeSchema = z.enum([
-  "ATTACK",
-  "DEFEND",
-  "SKILL",
-  "FLEE",
-]);
-export type CombatActionType = z.infer<typeof CombatActionTypeSchema>;
+export const ActionTypeSchema = z.enum(["ATTACK", "DEFEND", "SKILL", "FLEE"]);
+export type ActionType = z.infer<typeof ActionTypeSchema>;
 
-export const SubmitActionRequestSchema = z.object({
-  combatInstanceId: z.string().uuid(),
-  roundNumber: z.number().int().nonnegative(),
-  actionType: CombatActionTypeSchema,
-  targetId: z.string().uuid().optional(),
-  idempotencyKey: z.string().uuid(),
+export const EntityTypeSchema = z.enum(["PLAYER", "ENEMY"]);
+export type EntityType = z.infer<typeof EntityTypeSchema>;
+
+export const PvPChallengeStateSchema = z.enum(["WARNING", "ESCAPED", "COMBAT"]);
+export type PvPChallengeState = z.infer<typeof PvPChallengeStateSchema>;
+
+// ── Combat Instance ───────────────────────────────────────────────────────────
+
+export const CombatantSchema = z.object({
+  id: z.string().uuid(),
+  entityType: EntityTypeSchema,
+  entityId: z.string().uuid(),
+  teamId: z.string().uuid().optional(),
+  hpCurrent: z.number(),
+  hpMax: z.number(),
+  initiative: z.number(),
+  name: z.string(),
+  isDowned: z.boolean(),
 });
-export type SubmitActionRequest = z.infer<typeof SubmitActionRequestSchema>;
+export type Combatant = z.infer<typeof CombatantSchema>;
+
+export const CombatActionSchema = z.object({
+  id: z.string().uuid(),
+  roundNumber: z.number(),
+  actorId: z.string().uuid(),
+  actionType: ActionTypeSchema,
+  targetId: z.string().uuid().optional(),
+  isLocked: z.boolean(),
+  damage: z.number().optional(),
+  effect: z.string().optional(),
+});
+export type CombatAction = z.infer<typeof CombatActionSchema>;
 
 export const CombatInstanceSchema = z.object({
   id: z.string().uuid(),
   type: CombatTypeSchema,
   state: CombatStateSchema,
-  roundNumber: z.number().int().nonnegative(),
+  roundNumber: z.number(),
   startedAt: z.string().datetime(),
+  combatants: z.array(CombatantSchema),
+  actions: z.array(CombatActionSchema),
 });
 export type CombatInstance = z.infer<typeof CombatInstanceSchema>;
+
+// ── Combat Log ────────────────────────────────────────────────────────────────
+
+export const CombatLogTypeSchema = z.enum(["ACTION", "DAMAGE", "EFFECT", "STATE"]);
+export type CombatLogType = z.infer<typeof CombatLogTypeSchema>;
+
+export const CombatLogSchema = z.object({
+  timestamp: z.string().datetime(),
+  message: z.string(),
+  type: CombatLogTypeSchema,
+});
+export type CombatLog = z.infer<typeof CombatLogSchema>;
+
+// ── Request Bodies ────────────────────────────────────────────────────────────
+
+export const SubmitActionBodySchema = z.object({
+  actionType: ActionTypeSchema,
+  targetId: z.string().uuid().optional(),
+  idempotencyKey: z.string().uuid(),
+});
+export type SubmitActionBody = z.infer<typeof SubmitActionBodySchema>;
+
+// ── WebSocket Events ──────────────────────────────────────────────────────────
+
+export const CombatStartedEventSchema = z.object({
+  event: z.literal("combat:started"),
+  data: z.object({
+    combatId: z.string().uuid(),
+    type: CombatTypeSchema,
+    enemyName: z.string().optional(),
+    opponentTeamId: z.string().uuid().optional(),
+  }),
+});
+export type CombatStartedEvent = z.infer<typeof CombatStartedEventSchema>;
+
+export const CombatActionSubmittedEventSchema = z.object({
+  event: z.literal("combat:action_submitted"),
+  data: z.object({
+    combatId: z.string().uuid(),
+    action: CombatActionSchema,
+  }),
+});
+export type CombatActionSubmittedEvent = z.infer<typeof CombatActionSubmittedEventSchema>;
+
+export const CombatRoundResolvedEventSchema = z.object({
+  event: z.literal("combat:round_resolved"),
+  data: z.object({
+    combatId: z.string().uuid(),
+    round: z.number(),
+    logs: z.array(CombatLogSchema),
+  }),
+});
+export type CombatRoundResolvedEvent = z.infer<typeof CombatRoundResolvedEventSchema>;
+
+export const CombatCompletedEventSchema = z.object({
+  event: z.literal("combat:completed"),
+  data: z.object({
+    combatId: z.string().uuid(),
+    logs: z.array(CombatLogSchema),
+  }),
+});
+export type CombatCompletedEvent = z.infer<typeof CombatCompletedEventSchema>;
+
+export const PvPChallengeStartedEventSchema = z.object({
+  event: z.literal("pvp:challenge_started"),
+  data: z.object({
+    challengeId: z.string().uuid(),
+    role: z.enum(["attacker", "defender"]),
+    opponentTeamId: z.string().uuid(),
+    expiresAt: z.string().datetime(),
+  }),
+});
+export type PvPChallengeStartedEvent = z.infer<typeof PvPChallengeStartedEventSchema>;
+
+export const PvPChallengeEscapedEventSchema = z.object({
+  event: z.literal("pvp:challenge_escaped"),
+  data: z.object({
+    challengeId: z.string().uuid(),
+    reason: z.string().optional(),
+  }),
+});
+export type PvPChallengeEscapedEvent = z.infer<typeof PvPChallengeEscapedEventSchema>;
+
+export const TeamWipedEventSchema = z.object({
+  event: z.literal("team:wiped"),
+  data: z.object({
+    message: z.string(),
+  }),
+});
+export type TeamWipedEvent = z.infer<typeof TeamWipedEventSchema>;
