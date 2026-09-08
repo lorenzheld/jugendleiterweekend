@@ -41,7 +41,7 @@ export interface Combatant {
   id: string;
   entityType: "PLAYER" | "ENEMY";
   entityId: string;
-  teamId?: string;
+  teamId?: string | undefined;
   hpCurrent: number;
   hpMax: number;
   initiative: number;
@@ -54,7 +54,7 @@ export interface CombatAction {
   roundNumber: number;
   actorId: string;
   actionType: ActionType;
-  targetId?: string;
+  targetId?: string | undefined;
   isLocked: boolean;
   damage?: number;
   effect?: string;
@@ -108,7 +108,7 @@ export async function startPvECombat(opts: {
   }
 
   // Create combat instance
-  const [combat] = await db
+  const combatResults = await db
     .insert(combatInstances)
     .values({
       type: "PVE",
@@ -117,10 +117,15 @@ export async function startPvECombat(opts: {
     })
     .returning();
 
+  const combat = combatResults[0];
+  if (!combat) {
+    throw new Error("Failed to create combat instance");
+  }
+
   // Create combatants for players
   const playerCombatants = await Promise.all(
     teamPlayers.map(async (player) => {
-      const [combatant] = await db
+      const results = await db
         .insert(combatants)
         .values({
           combatInstanceId: combat.id,
@@ -130,6 +135,8 @@ export async function startPvECombat(opts: {
           hpCurrent: player.hpCurrent,
         })
         .returning();
+      const combatant = results[0];
+      if (!combatant) throw new Error("Failed to create player combatant");
       return combatant;
     })
   );
@@ -142,7 +149,7 @@ export async function startPvECombat(opts: {
   const enemyHp = enemyProps.hp ?? 100;
   const enemyInitiative = enemyProps.initiative ?? 50;
 
-  const [enemyCombatant] = await db
+  const enemyResults = await db
     .insert(combatants)
     .values({
       combatInstanceId: combat.id,
@@ -151,6 +158,11 @@ export async function startPvECombat(opts: {
       hpCurrent: enemyHp,
     })
     .returning();
+
+  const enemyCombatant = enemyResults[0];
+  if (!enemyCombatant) {
+    throw new Error("Failed to create enemy combatant");
+  }
 
   // Start round 1
   await db
@@ -263,7 +275,7 @@ export async function submitCombatAction(opts: {
   combatId: string;
   playerId: string;
   actionType: ActionType;
-  targetId?: string;
+  targetId?: string | undefined;
   idempotencyKey: string;
 }): Promise<CombatAction> {
   const { combatId, playerId, actionType, targetId, idempotencyKey } = opts;
@@ -790,7 +802,7 @@ export async function startPvPChallenge(opts: {
   // Create PvP challenge
   const expiresAt = new Date(Date.now() + PVP_WARNING_TIMER_MS);
 
-  const [challenge] = await db
+  const challengeResults = await db
     .insert(pvpChallenges)
     .values({
       attackerTeamId,
@@ -799,6 +811,11 @@ export async function startPvPChallenge(opts: {
       expiresAt,
     })
     .returning();
+
+  const challenge = challengeResults[0];
+  if (!challenge) {
+    throw new Error("Failed to create PvP challenge");
+  }
 
   // Emit WS events to both teams
   if (wsHub) {
