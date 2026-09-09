@@ -301,9 +301,10 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       // Construct WebSocket URL with JWT token as query param
       // (browsers can't set Authorization header on WebSocket upgrade)
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = import.meta.env.DEV 
-        ? "localhost:3000" 
-        : window.location.host;
+      // In dev: use window.location.host (Vite dev server) – Vite proxies
+      // WebSocket connections via the `/api` rule (ws: true in vite.config.ts).
+      // In prod: same host as the frontend.
+      const host = window.location.host;
       const url = `${protocol}//${host}/api/v1/geo/ws?token=${token}`;
       
       log("Connecting to:", url.replace(token, "***"));
@@ -395,7 +396,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       mountedRef.current = false;
       disconnect();
     };
-  }, [isAuthenticated, connect, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // ── Return API ──────────────────────────────────────────────────────────────
   

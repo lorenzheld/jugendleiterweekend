@@ -20,7 +20,7 @@ import type {
   CombatActionSubmittedEvent,
 } from "@jlw/contracts";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
 
 export function useCombat(playerId: string, token?: string) {
   const [activeCombat, setActiveCombat] = useState<CombatInstance | null>(null);

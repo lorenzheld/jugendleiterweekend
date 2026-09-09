@@ -1,0 +1,100 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║         🧪 PFÄFFIKON PROTOTYP - LOKALER TEST                     ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+
+🚀 SO STARTEST DU DEN PROTOTYP:
+═══════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────┐
+│  OPTION 1: PowerShell (EMPFOHLEN)                                 │
+└───────────────────────────────────────────────────────────────────┘
+
+   1. PowerShell öffnen (Rechtsklick auf Start → Windows PowerShell)
+   2. Ins Projekt-Verzeichnis wechseln:
+      cd C:\Users\heldl\Projekte\jugendleiterweekend2026
+   3. Script ausführen:
+      .\deploy-prototype.ps1
+
+
+┌───────────────────────────────────────────────────────────────────┐
+│  OPTION 2: Batch-Datei (EINFACH)                                  │
+└───────────────────────────────────────────────────────────────────┘
+
+   1. Doppelklick auf:  deploy-prototype.bat
+   2. Fertig! Browser öffnet sich automatisch
+
+
+┌───────────────────────────────────────────────────────────────────┐
+│  OPTION 3: Manuell (für Profis)                                   │
+└───────────────────────────────────────────────────────────────────┘
+
+   1. Terminal/CMD öffnen
+   2. Befehle ausführen:
+
+      docker compose -f docker-compose.prototype.yml up -d --build
+      timeout /t 15 /nobreak
+      docker compose -f docker-compose.prototype.yml exec backend-prototype npm run db:migrate
+      docker compose -f docker-compose.prototype.yml exec backend-prototype npm run seed:prototype
+
+
+═══════════════════════════════════════════════════════════════════
+✅ NACH DEM START:
+═══════════════════════════════════════════════════════════════════
+
+📱 Im Browser öffnen:
+   → http://localhost:5175
+
+🔐 Einloggen mit:
+   → prototyp_player1 / test123
+
+🗺️ Karte sollte zeigen:
+   → Pfäffikon ZH - Im Berg
+
+
+═══════════════════════════════════════════════════════════════════
+🔍 PRÜFEN OB ES LÄUFT:
+═══════════════════════════════════════════════════════════════════
+
+✓ Backend Health Check:
+  http://localhost:3001/health
+  (sollte "OK" oder "healthy" anzeigen)
+
+✓ Container-Status:
+  docker compose -f docker-compose.prototype.yml ps
+  (sollte 3 Container zeigen: postgres, backend, frontend)
+
+✓ Logs anschauen:
+  docker compose -f docker-compose.prototype.yml logs -f
+
+
+═══════════════════════════════════════════════════════════════════
+🛑 STOPPEN:
+═══════════════════════════════════════════════════════════════════
+
+docker compose -f docker-compose.prototype.yml down
+
+
+═══════════════════════════════════════════════════════════════════
+💡 WICHTIG:
+═══════════════════════════════════════════════════════════════════
+
+✅ Deine Rom-Datenbank (Port 5432) wird NICHT berührt!
+✅ Prototyp läuft auf separaten Ports (3001, 5175, 5433)
+✅ Du kannst beide Systeme gleichzeitig laufen lassen
+
+
+═══════════════════════════════════════════════════════════════════
+📚 MEHR INFO:
+═══════════════════════════════════════════════════════════════════
+
+→ QUICKSTART_PROTOTYPE.md      (Ausführliche Anleitung)
+→ docs/DEPLOYMENT_PROTOTYPE.md  (Server-Deployment)
+→ docs/*.pdf                    (Pfäffikon Spieldesign)
+
+
+═══════════════════════════════════════════════════════════════════
+🎮 VIEL ERFOLG BEIM TESTEN!
+═══════════════════════════════════════════════════════════════════

@@ -16,6 +16,7 @@
     "db:seed": "tsx scripts/seed-test-account.ts",
     "seed": "tsx scripts/seed.ts",
     "seed:dev": "cross-env SEED_SKIP_FILTER=true tsx scripts/seed.ts",
+    "seed:prototype": "tsx scripts/seed-prototype-pfaeffikon-fixed.ts",
     "test:epic5": "tsx scripts/test-epic5.ts",
     "test:epic8": "tsx scripts/test-epic8.ts",
     "test:ws": "tsx scripts/test-websocket.ts"
@@ -26,6 +27,8 @@
     "@fastify/jwt": "^8.0.1",
     "@fastify/websocket": "^10.0.1",
     "@jlw/contracts": "workspace:*",
+    "@types/bcryptjs": "^3.0.0",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
     "fastify": "^4.28.1",
     "pg": "^8.12.0",

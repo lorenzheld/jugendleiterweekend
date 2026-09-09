@@ -336,6 +336,14 @@ async function queryNearbyWorldObjects(opts: {
   // in half of Rome on bad GPS days.
   const accuracyBuffer = Math.min(accuracy, 100);
 
+  // In development/playtest mode, also include non-publishable objects so that
+  // prototype content (which ships with publishable=false) is discoverable
+  // without a production content approval cycle.
+  const skipPublishableFilter =
+    process.env["NODE_ENV"] !== "production" &&
+    (process.env["SEED_SKIP_FILTER"] === "true" ||
+      process.env["PLAYTEST_MODE"] === "true");
+
   const result = await db.execute<NearbyRow>(sql`
     SELECT
       wo.id,
@@ -357,7 +365,7 @@ async function queryNearbyWorldObjects(opts: {
     FROM world_object wo
     WHERE
       wo.geom IS NOT NULL
-      AND wo.publishable = true
+      AND (${skipPublishableFilter} OR wo.publishable = true)
       AND ST_DWithin(
         wo.geom::geography,
         ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,

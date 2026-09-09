@@ -1,0 +1,2172 @@
+{
+  "type": "FeatureCollection",
+  "name": "Via Romae – Pfäffikon ZH Prototype Game Objects v0.1",
+  "metadata": {
+    "schema": "via-romae/prototype-game-geojson/v0.1",
+    "generated_at": "2026-09-08",
+    "project": "Via Romae: Pfade der Ewigen Stadt",
+    "prototype_id": "PT-PFAEFFIKON-IM-BERG",
+    "purpose": "Map-ready vertical-slice content for the Im Berg field prototype in Pfäffikon ZH.",
+    "crs": "WGS84 / EPSG:4326",
+    "feature_count": 22,
+    "counts_by_feature_type": {
+      "prototype_play_area": 1,
+      "prototype_spawn_area": 1,
+      "spawn_road_network": 1,
+      "location_candidate": 8,
+      "quest_definition": 1,
+      "enemy_encounter": 3,
+      "store_definition": 1,
+      "revival_area": 1,
+      "revive_point": 1,
+      "spawn_controller": 1,
+      "boss_encounter": 1,
+      "boss_join_area": 1,
+      "boss_safe_zone": 1
+    },
+    "inherited_defaults": {
+      "location_interaction_radius_m": 15,
+      "location_exit_radius_m": 25,
+      "world_enemy_discovery_radius_m": 55,
+      "world_enemy_aggro_radius_m": 20,
+      "boss_join_radius_m": 30,
+      "boss_safe_zone_radius_m": 50,
+      "combat_action_seconds": 15,
+      "combat_result_seconds": "2-4",
+      "normal_location_team_members": 2
+    },
+    "explicit_prototype_overrides": {
+      "team_start_denarii": 200,
+      "boss_hp_scaling": "max(420, round(2160 * lockedParticipantCount / 13))",
+      "boss_announcement_schedule_seconds": [
+        180,
+        60,
+        15
+      ],
+      "random_spawn_cap": 2,
+      "optional_gm_forced_team_wipe": true
+    },
+    "asset_policy": "REUSE_MAIN_GAME_ASSETS_ONLY",
+    "prohibited_features": [
+      "AR",
+      "IMAGE_RECOGNITION",
+      "PAID_ENTRY",
+      "INTERIOR_DEPENDENCY",
+      "TURN_BY_TURN_NAVIGATION"
+    ],
+    "sources": {
+      "basis_documents": [
+        "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+        "Via_Romae_Questgruppierung_v0.10.xlsx",
+        "Via_Romae_GameObjects_v0.8.geojson",
+        "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+      ],
+      "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+      "coordinate_sources": [
+        "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+        "https://www.openstreetmap.org/way/27679770",
+        "https://www.openstreetmap.org/way/27679721",
+        "https://www.openstreetmap.org/way/27679771",
+        "https://www.openstreetmap.org/way/383276708"
+      ],
+      "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen."
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.7880616,
+              47.3774592
+            ],
+            [
+              8.788702,
+              47.3776148
+            ],
+            [
+              8.7897019,
+              47.3777936
+            ],
+            [
+              8.7901548,
+              47.3776427
+            ],
+            [
+              8.7908421,
+              47.3771852
+            ],
+            [
+              8.7911778,
+              47.3767098
+            ],
+            [
+              8.790881,
+              47.3764505
+            ],
+            [
+              8.791209,
+              47.3760119
+            ],
+            [
+              8.7918183,
+              47.3756677
+            ],
+            [
+              8.7928726,
+              47.3753847
+            ],
+            [
+              8.7942233,
+              47.3751017
+            ],
+            [
+              8.7953557,
+              47.3748612
+            ],
+            [
+              8.7961758,
+              47.3743282
+            ],
+            [
+              8.79565,
+              47.37373
+            ],
+            [
+              8.79525,
+              47.37345
+            ],
+            [
+              8.794,
+              47.3733
+            ],
+            [
+              8.7925,
+              47.37335
+            ],
+            [
+              8.791,
+              47.3735
+            ],
+            [
+              8.79012,
+              47.3736
+            ],
+            [
+              8.78992,
+              47.37395
+            ],
+            [
+              8.7893039,
+              47.3751437
+            ],
+            [
+              8.7886869,
+              47.3756246
+            ],
+            [
+              8.7880928,
+              47.3759831
+            ],
+            [
+              8.7874368,
+              47.3765254
+            ],
+            [
+              8.7874446,
+              47.3769829
+            ],
+            [
+              8.7880616,
+              47.3774592
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "prototype_play_area",
+        "area_id": "PT-AREA-IM-BERG",
+        "name": "Pfäffikon ZH – Im Berg – Prototyp-Spielfeld",
+        "day": "PROTOTYPE",
+        "behavior_outside": "WARN_THEN_BLOCK_NEW_WORLD_INTERACTIONS",
+        "warning_after_valid_samples": 2,
+        "note": "Redaktionelle Umsetzung der roten Begrenzung aus der annotierten Karte; südlich erweitert, damit die vollständige Zufallsgegner-Spawnzone innerhalb des Fences liegt.",
+        "stroke": "#D62828",
+        "stroke-width": 3,
+        "fill": "#D62828",
+        "fill-opacity": 0.05,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.78993,
+              47.37512
+            ],
+            [
+              8.7911,
+              47.3749
+            ],
+            [
+              8.7924,
+              47.37469
+            ],
+            [
+              8.79365,
+              47.37441
+            ],
+            [
+              8.7949,
+              47.37418
+            ],
+            [
+              8.7956,
+              47.37415
+            ],
+            [
+              8.79565,
+              47.37373
+            ],
+            [
+              8.79525,
+              47.37345
+            ],
+            [
+              8.794,
+              47.3733
+            ],
+            [
+              8.7925,
+              47.37335
+            ],
+            [
+              8.791,
+              47.3735
+            ],
+            [
+              8.79012,
+              47.3736
+            ],
+            [
+              8.78992,
+              47.37395
+            ],
+            [
+              8.78993,
+              47.37512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "prototype_spawn_area",
+        "spawn_area_id": "PT-SPAWN-AREA-01",
+        "name": "Zufallsgegner-Gebiet – grüne Markierung",
+        "placement_rule": "APPROVED_ROAD_LINES_ONLY",
+        "arbitrary_polygon_sampling_forbidden": true,
+        "offroad_spawn_forbidden": true,
+        "building_or_meadow_spawn_forbidden": true,
+        "note": "Das Polygon begrenzt nur die Auswahl. Die tatsächliche Position muss auf PT-SPAWN-ROADS-01 liegen.",
+        "stroke": "#008C3A",
+        "stroke-width": 4,
+        "fill": "#00A653",
+        "fill-opacity": 0.12,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              8.7901053,
+              47.3748139
+            ],
+            [
+              8.7901746,
+              47.3748013
+            ],
+            [
+              8.7904067,
+              47.3747593
+            ],
+            [
+              8.7909717,
+              47.3745027
+            ],
+            [
+              8.792138,
+              47.3740496
+            ],
+            [
+              8.7922381,
+              47.3740107
+            ]
+          ],
+          [
+            [
+              8.7901053,
+              47.3748139
+            ],
+            [
+              8.7900924,
+              47.3743513
+            ],
+            [
+              8.7901095,
+              47.3742374
+            ],
+            [
+              8.7901386,
+              47.3741485
+            ],
+            [
+              8.7901746,
+              47.3740732
+            ],
+            [
+              8.7902227,
+              47.3740008
+            ],
+            [
+              8.7902872,
+              47.3739174
+            ],
+            [
+              8.7903434,
+              47.3738459
+            ],
+            [
+              8.7903889,
+              47.3737844
+            ]
+          ],
+          [
+            [
+              8.7902214,
+              47.3736738
+            ],
+            [
+              8.7902325,
+              47.3736856
+            ],
+            [
+              8.7903126,
+              47.3737432
+            ],
+            [
+              8.7903889,
+              47.3737844
+            ],
+            [
+              8.7904655,
+              47.3738134
+            ],
+            [
+              8.7905737,
+              47.3738404
+            ],
+            [
+              8.790695,
+              47.3738558
+            ],
+            [
+              8.7908093,
+              47.3738582
+            ],
+            [
+              8.7909379,
+              47.3738497
+            ],
+            [
+              8.7914179,
+              47.3737845
+            ],
+            [
+              8.7918111,
+              47.3737311
+            ],
+            [
+              8.7924696,
+              47.3736417
+            ],
+            [
+              8.7930356,
+              47.3735682
+            ],
+            [
+              8.7934052,
+              47.3735164
+            ],
+            [
+              8.7937895,
+              47.373465
+            ],
+            [
+              8.7940268,
+              47.3734414
+            ],
+            [
+              8.7942346,
+              47.3734364
+            ],
+            [
+              8.7944396,
+              47.3734502
+            ],
+            [
+              8.7946255,
+              47.3734808
+            ],
+            [
+              8.7948144,
+              47.3735374
+            ],
+            [
+              8.7950161,
+              47.3736074
+            ],
+            [
+              8.7951181,
+              47.3736565
+            ],
+            [
+              8.7951885,
+              47.3736944
+            ],
+            [
+              8.7952936,
+              47.3737613
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "spawn_road_network",
+        "road_network_id": "PT-SPAWN-ROADS-01",
+        "name": "Freigegebene Straßenlinien für Zufallsspawns",
+        "road_names": [
+          "Bergweidstrasse",
+          "Bergstrasse",
+          "Wallikerstrasse"
+        ],
+        "osm_way_refs": [
+          "27679721",
+          "27679771",
+          "383276708",
+          "27681361"
+        ],
+        "allowed_highway_classes": [
+          "residential",
+          "tertiary"
+        ],
+        "disallowed_highway_classes": [
+          "service",
+          "footway",
+          "path",
+          "track"
+        ],
+        "sampling": "UNIFORM_BY_LINE_LENGTH_DETERMINISTIC_SEED",
+        "max_lateral_offset_m": 0,
+        "geometry_is_runtime_authoritative": true,
+        "stroke": "#006B35",
+        "stroke-width": 5,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7949444,
+          47.3745502
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_q1",
+        "name": "Queststation 1 – Ost",
+        "support_roles": [
+          "QUEST_PICKUP",
+          "DIALOGUE"
+        ],
+        "quest_refs": [
+          "PT-Q01"
+        ],
+        "step_refs": [
+          "PT-Q01-S01",
+          "PT-Q01-S02",
+          "PT-Q01-S03"
+        ],
+        "interaction_anchor": "PUBLIC_ROAD_JUNCTION",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.3745502,8.7949444",
+        "marker-color": "#1E688B",
+        "marker-size": "large",
+        "marker-symbol": "1"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7926421,
+          47.3745641
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_q2",
+        "name": "Queststation 2 – Mitte",
+        "support_roles": [
+          "QUEST_OBJECTIVE",
+          "DIALOGUE",
+          "QUIZ"
+        ],
+        "quest_refs": [
+          "PT-Q01"
+        ],
+        "step_refs": [
+          "PT-Q01-S04",
+          "PT-Q01-S05"
+        ],
+        "interaction_anchor": "BERGHALDENSTRASSE_ROAD_EDGE",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.3745641,8.7926421",
+        "marker-color": "#1E688B",
+        "marker-size": "large",
+        "marker-symbol": "2"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7906471,
+          47.3754434
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_q3",
+        "name": "Queststation 3 – West",
+        "support_roles": [
+          "QUEST_OBJECTIVE",
+          "DIALOGUE",
+          "QUEST_ENCOUNTER"
+        ],
+        "quest_refs": [
+          "PT-Q01"
+        ],
+        "step_refs": [
+          "PT-Q01-S06",
+          "PT-Q01-S07",
+          "PT-Q01-S08",
+          "PT-Q01-S09",
+          "PT-Q01-S10"
+        ],
+        "npc_refs": [
+          "npc_konrad_schildwacht"
+        ],
+        "enemy_refs": [
+          "PT-QE-01"
+        ],
+        "interaction_anchor": "BERGHALDENSTRASSE_ROAD_EDGE",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.3754434,8.7906471",
+        "marker-color": "#1E688B",
+        "marker-size": "large",
+        "marker-symbol": "3"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7938204,
+          47.3741958
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_unique_east",
+        "name": "Unique-Gegner Ost",
+        "support_roles": [
+          "UNIQUE_WORLD_ENEMY"
+        ],
+        "enemy_refs": [
+          "PT-UE-01"
+        ],
+        "interaction_anchor": "BERGHALDENSTRASSE_ROAD_CENTERLINE",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.3741958,8.7938204",
+        "marker-color": "#B5522D",
+        "marker-size": "large",
+        "marker-symbol": "ue"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7916122,
+          47.3749512
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_unique_west",
+        "name": "Unique-Gegner West",
+        "support_roles": [
+          "UNIQUE_WORLD_ENEMY",
+          "CONTROLLED_WIPE_TEST"
+        ],
+        "enemy_refs": [
+          "PT-UE-02"
+        ],
+        "interaction_anchor": "BERGHALDENSTRASSE_ROAD_CENTERLINE",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.3749512,8.7916122",
+        "marker-color": "#8F2D20",
+        "marker-size": "large",
+        "marker-symbol": "ue"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7902254,
+          47.3761413
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_store",
+        "name": "Bottega del Borgo – Teststand",
+        "support_roles": [
+          "STORE_LOCATION"
+        ],
+        "store_refs": [
+          "PT-STORE-01"
+        ],
+        "interaction_anchor": "PUBLIC_FOOTPATH_NEAR_MARKED_SQUARE",
+        "visibility_radius_m": 500,
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.3761413,8.7902254",
+        "marker-color": "#D8B45B",
+        "marker-size": "large",
+        "marker-symbol": "shop"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7893864,
+          47.3771983
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_revive",
+        "name": "Wiederbelebungsbereich – Nord",
+        "support_roles": [
+          "REVIVE_POINT"
+        ],
+        "revive_refs": [
+          "PT-REVIVE-01"
+        ],
+        "interaction_anchor": "PUBLIC_ROAD_EDGE_NEAR_MARKED_TRIANGLE",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.3771983,8.7893864",
+        "marker-color": "#2D8C5B",
+        "marker-size": "large",
+        "marker-symbol": "hospital"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7894232,
+          47.375964
+        ]
+      },
+      "properties": {
+        "day": "PROTOTYPE",
+        "cluster": "PT_PFAEFFIKON_IM_BERG",
+        "decision": "PROTOTYPE_SELECTED",
+        "active": true,
+        "research_status": "NOT_APPLICABLE_TECHNICAL_PLAYTEST",
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "field_test_required": true,
+        "opening_hours_dependent": false,
+        "paid_entry_required": false,
+        "interior_required": false,
+        "standard_interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "basis_documents": [
+          "Via_Romae_GDD_v0.17_Teil_I-IX_Kapitel_1-42.docx",
+          "Via_Romae_Questgruppierung_v0.10.xlsx",
+          "Via_Romae_GameObjects_v0.8.geojson",
+          "ec96dc1c-a5bd-48bf-ad2b-f04dbaec42d9.png"
+        ],
+        "coordinate_method": "ANNOTATED_MAP_GEOREFERENCED_AND_SNAPPED_TO_OSM_ROAD_CENTERLINES",
+        "coordinate_sources": [
+          "https://api3.geo.admin.ch/rest/services/api/SearchServer",
+          "https://www.openstreetmap.org/way/27679770",
+          "https://www.openstreetmap.org/way/27679721",
+          "https://www.openstreetmap.org/way/27679771",
+          "https://www.openstreetmap.org/way/383276708"
+        ],
+        "coordinate_precision_note": "Redaktionell aus der markierten Karte abgeleitet und auf Straßen-/Weglinien gesetzt. Vor dem ersten Lauf als Playtestdaten behandeln; gemessene GPS-Streuung danach versioniert zurückführen.",
+        "feature_type": "location_candidate",
+        "candidate_id": "place_pt_pfaeffikon_boss",
+        "name": "Bossbereich – Il Cannoniere",
+        "support_roles": [
+          "WORLD_BOSS_LOCATION",
+          "BOSS_JOIN_CENTER",
+          "BOSS_STAGING_SAFE_ZONE"
+        ],
+        "boss_refs": [
+          "PT-BOSS-01"
+        ],
+        "interaction_anchor": "PUBLIC_ROAD_JUNCTION_NEAR_MARKED_STAR",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=47.375964,8.7894232",
+        "marker-color": "#7B1E1E",
+        "marker-size": "large",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [
+          [
+            8.7949444,
+            47.3745502
+          ],
+          [
+            8.7926421,
+            47.3745641
+          ],
+          [
+            8.7906471,
+            47.3754434
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "quest_definition",
+        "quest_id": "PT-Q01",
+        "quest_type": "REGULAR_PROTOTYPE",
+        "day": "PROTOTYPE",
+        "title": "Die drei Siegel der Schildwacht",
+        "quest_giver_id": "npc_konrad_schildwacht",
+        "quest_giver_name": "Konrad von der letzten Schildwacht",
+        "story_conflict": "Konrad prüft, ob das Team eine Schutzfolge erinnert, als Einheit drei Posten erreicht und den Schatten des Passetto besiegt.",
+        "dramatic_arc": "Auftrag → Merkfolge → Prüfung → Kampf → Anerkennung",
+        "ordered_candidate_ids": [
+          "place_pt_pfaeffikon_q1",
+          "place_pt_pfaeffikon_q2",
+          "place_pt_pfaeffikon_q3"
+        ],
+        "geometry_semantics": "ORDERED_CHECKPOINTS_NOT_A_WALKING_ROUTE",
+        "estimated_minutes_min": 15,
+        "estimated_minutes_max": 22,
+        "normal_team_members_required": 2,
+        "standard_interaction_radius_m": 15,
+        "mechanics": [
+          "GPS_LOCATION",
+          "DIALOGUE",
+          "MULTIPLE_CHOICE",
+          "TEAM_PRESENCE",
+          "QUEST_COMBAT",
+          "RECONNECT_CHECKPOINT",
+          "ATOMIC_REWARD"
+        ],
+        "no_ar": true,
+        "no_image_recognition": true,
+        "completion_rule": "PT-Q01-S01..S10 required; reward transaction committed exactly once",
+        "fallback_rule": "Quiz may be retried with a dialogue-derived hint; no physical clue or free-text dependency.",
+        "reward": {
+          "glory": 55,
+          "denarii": 30,
+          "quest_item": "qi_sigillum_guardiae"
+        },
+        "content_status": "PLAYTEST_READY",
+        "publishable": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7906471,
+          47.3754434
+        ]
+      },
+      "properties": {
+        "feature_type": "enemy_encounter",
+        "encounter_id": "PT-QE-01",
+        "system_type": "QUEST_ENEMY",
+        "day": "PROTOTYPE",
+        "quest_ref": "PT-Q01",
+        "candidate_id": "place_pt_pfaeffikon_q3",
+        "name": "Schatten des Passetto",
+        "template_ref": "CP-QE-PASSETTO",
+        "main_game_quest_ref": "D1-Q01",
+        "asset_reuse_only": true,
+        "trigger": "QUEST_STEP_AND_15M_LOCATION_GATE",
+        "team_scoped": true,
+        "normal_respawn": false,
+        "combat_round_seconds": 15,
+        "result_presentation_seconds_min": 2,
+        "result_presentation_seconds_max": 4,
+        "test_target_rounds": 3,
+        "reconnect_test_after_round": 1,
+        "discovery_radius_m": 55,
+        "aggro_radius_m": 20,
+        "marker-color": "#6B4E71",
+        "marker-size": "medium",
+        "marker-symbol": "sword"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7938204,
+          47.3741958
+        ]
+      },
+      "properties": {
+        "feature_type": "enemy_encounter",
+        "encounter_id": "PT-UE-01",
+        "system_type": "WORLD_ENEMY",
+        "candidate_id": "place_pt_pfaeffikon_unique_east",
+        "name": "Leone del Flaminio",
+        "template_ref": "UE-D1-02",
+        "combat_profile_ref": "CP-UE-D1-02",
+        "rarity": "R",
+        "combat_role": "FAST_BRUISER",
+        "stats": {
+          "hp": 170,
+          "atk": 20,
+          "def": 12,
+          "init": 14,
+          "status_chance": 0.18
+        },
+        "rewards": {
+          "glory": 35,
+          "denarii": 20,
+          "loot_rarity": "R"
+        },
+        "combat_pattern": "Sichtbar angekündigter gerader Sprungangriff; Defensive Haltung kann die Linie abfangen.",
+        "asset_reuse_only": true,
+        "discovery_radius_m": 55,
+        "aggro_radius_m": 20,
+        "respawn_minutes": 20,
+        "test_focus": "World-Enemy-Entdeckung, Aggro, Telegraphie und Item-Revive eines einzelnen DOWNED-Spielers.",
+        "marker-color": "#B5522D",
+        "marker-size": "large",
+        "marker-symbol": "sword"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7916122,
+          47.3749512
+        ]
+      },
+      "properties": {
+        "feature_type": "enemy_encounter",
+        "encounter_id": "PT-UE-02",
+        "system_type": "WORLD_ENEMY",
+        "candidate_id": "place_pt_pfaeffikon_unique_west",
+        "name": "Legionario della Colonna",
+        "template_ref": "UE-D1-04",
+        "combat_profile_ref": "CP-UE-D1-04",
+        "rarity": "SR",
+        "combat_role": "FORMATION_SOLDIER",
+        "stats": {
+          "hp": 250,
+          "atk": 23,
+          "def": 19,
+          "init": 9,
+          "status_chance": 0.24
+        },
+        "rewards": {
+          "glory": 50,
+          "denarii": 30,
+          "loot_rarity": "SR"
+        },
+        "combat_pattern": "Schildlinie; nach jeder dritten Teamaktion Wechsel zur Speerformation.",
+        "asset_reuse_only": true,
+        "discovery_radius_m": 55,
+        "aggro_radius_m": 20,
+        "respawn_minutes": 30,
+        "test_focus": "Stärkeres World-Enemy-Profil und garantierter Team-Wipe-/Respawn-Test.",
+        "playtest_instrumentation": "GM_FORCE_TEAM_WIPE_AFTER_ROUND_2_OPTIONAL",
+        "marker-color": "#8F2D20",
+        "marker-size": "large",
+        "marker-symbol": "sword"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7902254,
+          47.3761413
+        ]
+      },
+      "properties": {
+        "feature_type": "store_definition",
+        "store_id": "PT-STORE-01",
+        "name": "Bottega del Borgo – Teststand",
+        "candidate_id": "place_pt_pfaeffikon_store",
+        "template_ref": "STORE-D1-01",
+        "main_game_store_name": "Bottega del Borgo",
+        "visibility_radius_m": 500,
+        "interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "inventory_scope": "TEAM_UNLIMITED",
+        "test_team_start_denarii": 200,
+        "test_catalog": [
+          {
+            "item": "Panis Viatoris",
+            "price": 15
+          },
+          {
+            "item": "Aqua Vitae",
+            "price": 30
+          },
+          {
+            "item": "Rauchkugel",
+            "price": 45
+          },
+          {
+            "item": "Balsam der Wiederkehr",
+            "price": 120
+          }
+        ],
+        "sell_rule": "15_PERCENT_REFERENCE_PRICE_ROUNDED_TO_5",
+        "protected_items": [
+          "questLocked",
+          "bound",
+          "equipped"
+        ],
+        "test_only_balance_override": "Team beginnt mit 200 Denaren, damit Kauf und Fehlermeldung ohne Vorgrind testbar sind.",
+        "asset_reuse_only": true,
+        "marker-color": "#D8B45B",
+        "marker-size": "large",
+        "marker-symbol": "shop"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.7893864,
+              47.3773332
+            ],
+            [
+              8.7894124,
+              47.377332
+            ],
+            [
+              8.789438,
+              47.3773286
+            ],
+            [
+              8.7894626,
+              47.3773229
+            ],
+            [
+              8.789486,
+              47.3773151
+            ],
+            [
+              8.7895077,
+              47.3773053
+            ],
+            [
+              8.7895273,
+              47.3772937
+            ],
+            [
+              8.7895444,
+              47.3772804
+            ],
+            [
+              8.7895589,
+              47.3772657
+            ],
+            [
+              8.7895704,
+              47.3772499
+            ],
+            [
+              8.7895788,
+              47.3772332
+            ],
+            [
+              8.7895839,
+              47.3772159
+            ],
+            [
+              8.7895856,
+              47.3771983
+            ],
+            [
+              8.7895839,
+              47.3771807
+            ],
+            [
+              8.7895788,
+              47.3771634
+            ],
+            [
+              8.7895704,
+              47.3771467
+            ],
+            [
+              8.7895589,
+              47.3771309
+            ],
+            [
+              8.7895444,
+              47.3771162
+            ],
+            [
+              8.7895273,
+              47.3771029
+            ],
+            [
+              8.7895077,
+              47.3770913
+            ],
+            [
+              8.789486,
+              47.3770815
+            ],
+            [
+              8.7894626,
+              47.3770737
+            ],
+            [
+              8.789438,
+              47.377068
+            ],
+            [
+              8.7894124,
+              47.3770646
+            ],
+            [
+              8.7893864,
+              47.3770634
+            ],
+            [
+              8.7893604,
+              47.3770646
+            ],
+            [
+              8.7893348,
+              47.377068
+            ],
+            [
+              8.7893102,
+              47.3770737
+            ],
+            [
+              8.7892868,
+              47.3770815
+            ],
+            [
+              8.7892651,
+              47.3770913
+            ],
+            [
+              8.7892455,
+              47.3771029
+            ],
+            [
+              8.7892284,
+              47.3771162
+            ],
+            [
+              8.7892139,
+              47.3771309
+            ],
+            [
+              8.7892024,
+              47.3771467
+            ],
+            [
+              8.789194,
+              47.3771634
+            ],
+            [
+              8.7891889,
+              47.3771807
+            ],
+            [
+              8.7891872,
+              47.3771983
+            ],
+            [
+              8.7891889,
+              47.3772159
+            ],
+            [
+              8.789194,
+              47.3772332
+            ],
+            [
+              8.7892024,
+              47.3772499
+            ],
+            [
+              8.7892139,
+              47.3772657
+            ],
+            [
+              8.7892284,
+              47.3772804
+            ],
+            [
+              8.7892455,
+              47.3772937
+            ],
+            [
+              8.7892651,
+              47.3773053
+            ],
+            [
+              8.7892868,
+              47.3773151
+            ],
+            [
+              8.7893102,
+              47.3773229
+            ],
+            [
+              8.7893348,
+              47.3773286
+            ],
+            [
+              8.7893604,
+              47.377332
+            ],
+            [
+              8.7893864,
+              47.3773332
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "revival_area",
+        "revival_area_id": "PT-REVIVE-01",
+        "name": "Wiederbelebungsbereich – Nord",
+        "center_candidate_id": "place_pt_pfaeffikon_revive",
+        "radius_m": 15,
+        "confirmation_samples": 2,
+        "recovery": {
+          "hp_percent": 100,
+          "clear_normal_combat_statuses": true,
+          "retain_equipment": true
+        },
+        "downed_penalty": {
+          "denarii_per_player": 10
+        },
+        "team_wipe_penalty": {
+          "denarii_percent": 10,
+          "glory_percent": 3,
+          "glory_cap": 100
+        },
+        "state_flow": [
+          "DEFEATED",
+          "RESPAWN_PENDING",
+          "RESPAWNING",
+          "RECOVERED"
+        ],
+        "asset_reuse_only": true,
+        "stroke": "#2D8C5B",
+        "stroke-width": 3,
+        "fill": "#2D8C5B",
+        "fill-opacity": 0.22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7893864,
+          47.3771983
+        ]
+      },
+      "properties": {
+        "feature_type": "revive_point",
+        "revive_point_id": "PT-REVIVE-01-CENTER",
+        "candidate_id": "place_pt_pfaeffikon_revive",
+        "name": "Revive Point",
+        "interaction_radius_m": 15,
+        "exit_radius_m": 25,
+        "marker-color": "#2D8C5B",
+        "marker-size": "large",
+        "marker-symbol": "hospital"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.78993,
+              47.37512
+            ],
+            [
+              8.7911,
+              47.3749
+            ],
+            [
+              8.7924,
+              47.37469
+            ],
+            [
+              8.79365,
+              47.37441
+            ],
+            [
+              8.7949,
+              47.37418
+            ],
+            [
+              8.7956,
+              47.37415
+            ],
+            [
+              8.79565,
+              47.37373
+            ],
+            [
+              8.79525,
+              47.37345
+            ],
+            [
+              8.794,
+              47.3733
+            ],
+            [
+              8.7925,
+              47.37335
+            ],
+            [
+              8.791,
+              47.3735
+            ],
+            [
+              8.79012,
+              47.3736
+            ],
+            [
+              8.78992,
+              47.37395
+            ],
+            [
+              8.78993,
+              47.37512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "spawn_controller",
+        "spawn_controller_id": "PT-RANDOM-SPAWN-01",
+        "name": "Zufallsgegner-Controller",
+        "spawn_area_ref": "PT-SPAWN-AREA-01",
+        "allowed_road_network_ref": "PT-SPAWN-ROADS-01",
+        "placement_algorithm": "SAMPLE_UNIFORM_BY_APPROVED_LINE_LENGTH",
+        "deterministic_seed": "HASH(playtestRunId, spawnCycle)",
+        "pool": [
+          {
+            "template_ref": "CP-QE-RATTO",
+            "name": "Ratto dell’Acqua Virgo",
+            "weight": 60,
+            "asset_reuse_only": true
+          },
+          {
+            "template_ref": "CP-QE-CAVALLEGGERO",
+            "name": "Cavalleggero Pontificio",
+            "weight": 40,
+            "asset_reuse_only": true
+          }
+        ],
+        "max_active": 2,
+        "initial_spawn_count": 1,
+        "spawn_interval_seconds_min": 90,
+        "spawn_interval_seconds_max": 150,
+        "respawn_after_defeat_seconds": 180,
+        "discovery_radius_m": 55,
+        "aggro_radius_m": 20,
+        "min_distance_from_players_m": 35,
+        "max_distance_from_any_player_m": 140,
+        "min_distance_between_spawns_m": 60,
+        "min_distance_from_quest_points_m": 35,
+        "min_distance_from_store_m": 40,
+        "min_distance_from_revive_m": 50,
+        "min_distance_from_boss_m": 75,
+        "blocked_during_states": [
+          "ACTIVE_COMBAT",
+          "RESPAWNING",
+          "BOSS_ASSEMBLING",
+          "BOSS_ACTIVE"
+        ],
+        "hard_assertions": [
+          "pointOnLine(candidate, PT-SPAWN-ROADS-01, toleranceMeters=1)",
+          "pointInPolygon(candidate, PT-SPAWN-AREA-01)",
+          "roadClass in [residential, tertiary]",
+          "roadClass not in [service, footway, path, track]"
+        ],
+        "forbidden_sampling": [
+          "RANDOM_POINT_IN_POLYGON",
+          "BUILDING_CENTROID",
+          "PARCEL_CENTROID",
+          "MEADOW_OR_FIELD_POINT"
+        ],
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "stroke": "#006B35",
+        "stroke-width": 2,
+        "fill": "#00A653",
+        "fill-opacity": 0.04
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.7894232,
+          47.375964
+        ]
+      },
+      "properties": {
+        "feature_type": "boss_encounter",
+        "boss_event_id": "PT-BOSS-01",
+        "name": "Il Cannoniere del Gianicolo",
+        "candidate_id": "place_pt_pfaeffikon_boss",
+        "main_game_event_ref": "B-D1-01",
+        "combat_profile_ref": "CP-WB-CANNONIERE",
+        "character_ref": "npc_cannoniere_gianicolo",
+        "rarity": "E",
+        "standard_main_game_stats": {
+          "hp_for_13_players": 2160,
+          "def": 24,
+          "init": 9
+        },
+        "prototype_hp_scaling": "max(420, round(2160 * lockedParticipantCount / 13))",
+        "prototype_scaling_freeze": "ASSEMBLING_TO_ACTIVE",
+        "phases": [
+          {
+            "phase": 1,
+            "hp_range": "100-67%",
+            "stance_ref": "STANCE:npc_cannoniere_gianicolo:STAGE_1_TARGETING",
+            "mechanic": "TEAM_MARK_AND_COVER"
+          },
+          {
+            "phase": 2,
+            "hp_range": "66-34%",
+            "stance_ref": "STANCE:npc_cannoniere_gianicolo:STAGE_2_OVERHEATED",
+            "mechanic": "OVERHEATED_BARREL_WEAKNESS_WINDOW"
+          },
+          {
+            "phase": 3,
+            "hp_range": "33-0%",
+            "stance_ref": "STANCE:npc_cannoniere_gianicolo:STAGE_3_LAST_STANDARD",
+            "mechanic": "LAST_STANDARD_AND_GLOBAL_COVER_RESPONSE"
+          }
+        ],
+        "event_lifecycle": [
+          "SCHEDULED",
+          "ANNOUNCED",
+          "ASSEMBLING",
+          "ACTIVE",
+          "RESOLVING",
+          "COMPLETED",
+          "FAILED"
+        ],
+        "prototype_announcement_schedule_seconds": [
+          180,
+          60,
+          15
+        ],
+        "join_radius_m": 30,
+        "safe_zone_radius_m": 50,
+        "combat_round_seconds": 15,
+        "global_mechanic": {
+          "id": "PT-BOSS-COVER",
+          "prompt": "IN DECKUNG!",
+          "response": "DECKUNG_BESTAETIGEN",
+          "response_window_seconds": 6,
+          "success_threshold_percent": 60,
+          "success_effect": "Boss salvo damage x0.5",
+          "failure_effect": "Boss salvo resolves at full damage",
+          "contribution_value": 60
+        },
+        "contribution_weights": {
+          "damage": 1,
+          "effective_healing": 0.8,
+          "prevented_damage": 0.7,
+          "relevant_debuff": 15,
+          "revive": 30,
+          "mechanic": "40-100",
+          "four_player_team_factor": 0.75
+        },
+        "live_contribution_display": "QUALITATIVE_ONLY",
+        "rewards_by_rank": [
+          {
+            "rank": 1,
+            "glory": 220,
+            "denarii": 130,
+            "guaranteed_equipment": "L"
+          },
+          {
+            "rank": 2,
+            "glory": 170,
+            "denarii": 100,
+            "guaranteed_equipment": "E"
+          },
+          {
+            "rank": 3,
+            "glory": 130,
+            "denarii": 80,
+            "guaranteed_equipment": "SSR"
+          },
+          {
+            "rank": 4,
+            "glory": 100,
+            "denarii": 60,
+            "guaranteed_equipment": "SR"
+          }
+        ],
+        "asset_refs": [
+          "CHAR-PORTRAIT:npc_cannoniere_gianicolo",
+          "STANCE:npc_cannoniere_gianicolo:STAGE_1_TARGETING",
+          "STANCE:npc_cannoniere_gianicolo:STAGE_2_OVERHEATED",
+          "STANCE:npc_cannoniere_gianicolo:STAGE_3_LAST_STANDARD"
+        ],
+        "asset_reuse_only": true,
+        "content_status": "PLAYTEST_READY",
+        "publishable": false,
+        "marker-color": "#7B1E1E",
+        "marker-size": "large",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.7894232,
+              47.3762338
+            ],
+            [
+              8.7894752,
+              47.3762315
+            ],
+            [
+              8.7895263,
+              47.3762246
+            ],
+            [
+              8.7895757,
+              47.3762133
+            ],
+            [
+              8.7896224,
+              47.3761977
+            ],
+            [
+              8.7896657,
+              47.376178
+            ],
+            [
+              8.7897049,
+              47.3761548
+            ],
+            [
+              8.7897393,
+              47.3761282
+            ],
+            [
+              8.7897682,
+              47.3760989
+            ],
+            [
+              8.7897913,
+              47.3760672
+            ],
+            [
+              8.789808,
+              47.3760338
+            ],
+            [
+              8.7898182,
+              47.3759992
+            ],
+            [
+              8.7898216,
+              47.375964
+            ],
+            [
+              8.7898182,
+              47.3759288
+            ],
+            [
+              8.789808,
+              47.3758942
+            ],
+            [
+              8.7897913,
+              47.3758608
+            ],
+            [
+              8.7897682,
+              47.3758291
+            ],
+            [
+              8.7897393,
+              47.3757998
+            ],
+            [
+              8.7897049,
+              47.3757732
+            ],
+            [
+              8.7896657,
+              47.37575
+            ],
+            [
+              8.7896224,
+              47.3757303
+            ],
+            [
+              8.7895757,
+              47.3757147
+            ],
+            [
+              8.7895263,
+              47.3757034
+            ],
+            [
+              8.7894752,
+              47.3756965
+            ],
+            [
+              8.7894232,
+              47.3756942
+            ],
+            [
+              8.7893712,
+              47.3756965
+            ],
+            [
+              8.7893201,
+              47.3757034
+            ],
+            [
+              8.7892707,
+              47.3757147
+            ],
+            [
+              8.789224,
+              47.3757303
+            ],
+            [
+              8.7891807,
+              47.37575
+            ],
+            [
+              8.7891415,
+              47.3757732
+            ],
+            [
+              8.7891071,
+              47.3757998
+            ],
+            [
+              8.7890782,
+              47.3758291
+            ],
+            [
+              8.7890551,
+              47.3758608
+            ],
+            [
+              8.7890384,
+              47.3758942
+            ],
+            [
+              8.7890282,
+              47.3759288
+            ],
+            [
+              8.7890248,
+              47.375964
+            ],
+            [
+              8.7890282,
+              47.3759992
+            ],
+            [
+              8.7890384,
+              47.3760338
+            ],
+            [
+              8.7890551,
+              47.3760672
+            ],
+            [
+              8.7890782,
+              47.3760989
+            ],
+            [
+              8.7891071,
+              47.3761282
+            ],
+            [
+              8.7891415,
+              47.3761548
+            ],
+            [
+              8.7891807,
+              47.376178
+            ],
+            [
+              8.789224,
+              47.3761977
+            ],
+            [
+              8.7892707,
+              47.3762133
+            ],
+            [
+              8.7893201,
+              47.3762246
+            ],
+            [
+              8.7893712,
+              47.3762315
+            ],
+            [
+              8.7894232,
+              47.3762338
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "boss_join_area",
+        "boss_join_area_id": "PT-BOSS-01-JOIN",
+        "boss_event_ref": "PT-BOSS-01",
+        "name": "Boss-Beitrittsbereich 30 m",
+        "radius_m": 30,
+        "join_rule": "ONE_LIVING_MEMBER_REGISTERS_TEAM; LATE_MEMBERS_ACT_NEXT_FULL_ROUND",
+        "confirmation_samples": 2,
+        "stroke": "#7B1E1E",
+        "stroke-width": 3,
+        "fill": "#B5522D",
+        "fill-opacity": 0.18
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.7894232,
+              47.3764137
+            ],
+            [
+              8.7895099,
+              47.3764098
+            ],
+            [
+              8.7895951,
+              47.3763983
+            ],
+            [
+              8.7896773,
+              47.3763794
+            ],
+            [
+              8.7897552,
+              47.3763534
+            ],
+            [
+              8.7898274,
+              47.3763207
+            ],
+            [
+              8.7898927,
+              47.376282
+            ],
+            [
+              8.78995,
+              47.3762377
+            ],
+            [
+              8.7899983,
+              47.3761888
+            ],
+            [
+              8.7900367,
+              47.3761361
+            ],
+            [
+              8.7900646,
+              47.3760804
+            ],
+            [
+              8.7900815,
+              47.3760227
+            ],
+            [
+              8.7900872,
+              47.375964
+            ],
+            [
+              8.7900815,
+              47.3759053
+            ],
+            [
+              8.7900646,
+              47.3758476
+            ],
+            [
+              8.7900367,
+              47.3757919
+            ],
+            [
+              8.7899983,
+              47.3757392
+            ],
+            [
+              8.78995,
+              47.3756903
+            ],
+            [
+              8.7898927,
+              47.375646
+            ],
+            [
+              8.7898274,
+              47.3756073
+            ],
+            [
+              8.7897552,
+              47.3755746
+            ],
+            [
+              8.7896773,
+              47.3755486
+            ],
+            [
+              8.7895951,
+              47.3755297
+            ],
+            [
+              8.7895099,
+              47.3755182
+            ],
+            [
+              8.7894232,
+              47.3755143
+            ],
+            [
+              8.7893365,
+              47.3755182
+            ],
+            [
+              8.7892513,
+              47.3755297
+            ],
+            [
+              8.7891691,
+              47.3755486
+            ],
+            [
+              8.7890912,
+              47.3755746
+            ],
+            [
+              8.789019,
+              47.3756073
+            ],
+            [
+              8.7889537,
+              47.375646
+            ],
+            [
+              8.7888964,
+              47.3756903
+            ],
+            [
+              8.7888481,
+              47.3757392
+            ],
+            [
+              8.7888097,
+              47.3757919
+            ],
+            [
+              8.7887818,
+              47.3758476
+            ],
+            [
+              8.7887649,
+              47.3759053
+            ],
+            [
+              8.7887592,
+              47.375964
+            ],
+            [
+              8.7887649,
+              47.3760227
+            ],
+            [
+              8.7887818,
+              47.3760804
+            ],
+            [
+              8.7888097,
+              47.3761361
+            ],
+            [
+              8.7888481,
+              47.3761888
+            ],
+            [
+              8.7888964,
+              47.3762377
+            ],
+            [
+              8.7889537,
+              47.376282
+            ],
+            [
+              8.789019,
+              47.3763207
+            ],
+            [
+              8.7890912,
+              47.3763534
+            ],
+            [
+              8.7891691,
+              47.3763794
+            ],
+            [
+              8.7892513,
+              47.3763983
+            ],
+            [
+              8.7893365,
+              47.3764098
+            ],
+            [
+              8.7894232,
+              47.3764137
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "boss_safe_zone",
+        "boss_safe_zone_id": "PT-BOSS-01-SAFE",
+        "boss_event_ref": "PT-BOSS-01",
+        "name": "Boss-Sicherheitszone 50 m",
+        "radius_m": 50,
+        "pvp_disabled": true,
+        "random_spawns_disabled": true,
+        "stroke": "#D8B45B",
+        "stroke-width": 2,
+        "fill": "#D8B45B",
+        "fill-opacity": 0.08
+      }
+    }
+  ]
+}

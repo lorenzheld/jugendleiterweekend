@@ -1,0 +1,73 @@
+services:
+  # ── PostgreSQL + PostGIS (PROTOTYPE) ────────────────────────────────────────
+  postgres-prototype:
+    image: postgis/postgis:16-3.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: jugendleiter2026_prototype
+    ports:
+      - "5433:5432"  # Anderer Port als Haupt-DB
+    volumes:
+      - postgres_prototype_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jlw_prototype_network
+
+  # ── Backend (PROTOTYPE) ─────────────────────────────────────────────────────
+  backend-prototype:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres-prototype:5432/jugendleiter2026_prototype
+      JWT_SECRET: ${JWT_SECRET:-prototype-dev-secret-change-me}
+      PORT: 3001
+      HOST: 0.0.0.0
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: info
+      # Prototyp-spezifische Feature-Flags
+      PLAYTEST_MODE: "true"
+      PLAYTEST_RUN_ID: "PT-PFAEFFIKON-IM-BERG"
+      SEED_SKIP_FILTER: "true"  # Lädt auch publishable=false Features
+    ports:
+      - "3001:3001"  # Anderer Port als Haupt-Backend
+    depends_on:
+      postgres-prototype:
+        condition: service_healthy
+    networks:
+      - jlw_prototype_network
+    volumes:
+      # Nur Pfäffikon-Daten mounten
+      - ./docs/Via_Romae_Pfaeffikon_Prototype_GameObjects_v0.1 (1).geojson:/app/data/prototype-gameobjects.geojson:ro
+      - ./docs/Via_Romae_Pfaeffikon_Prototype_Questdoc_v0.1.pdf:/app/data/questdoc.pdf:ro
+
+  # ── Frontend (PROTOTYPE) ────────────────────────────────────────────────────
+  frontend-prototype:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:3001
+        VITE_MAPTILER_API_KEY: ${VITE_MAPTILER_API_KEY}
+    restart: unless-stopped
+    ports:
+      - "5175:80"  # Anderer Port als Haupt-Frontend
+    networks:
+      - jlw_prototype_network
+    environment:
+      - VITE_PROTOTYPE_MODE=true
+
+volumes:
+  postgres_prototype_data:
+    driver: local
+
+networks:
+  jlw_prototype_network:
+    driver: bridge

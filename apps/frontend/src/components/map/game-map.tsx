@@ -9,7 +9,7 @@
  *   • Quest HUD (Epic 4): active quest slots at the bottom.
  *   • Quest Bottom-Sheet: opens on HUD slot click or DIALOGUE-phase tap.
  *
- * The map style URL is configured via VITE_MAPTILER_KEY.
+ * The map style URL is configured via VITE_MAPTILER_API_KEY.
  * If the key is missing a MapLibre demo style is used as fallback.
  *
  * GPS position is continuously tracked via `useGeolocation` which also
@@ -63,7 +63,7 @@ import { useEconomySummary } from "../../hooks/use-economy.js";
 
 // ── Map style ─────────────────────────────────────────────────────────────────
 
-const MAPTILER_KEY = import.meta.env["VITE_MAPTILER_KEY"] as string | undefined;
+const MAPTILER_KEY = import.meta.env["VITE_MAPTILER_API_KEY"] as string | undefined;
 
 /** MapTiler Streets (OSM data) or the public MapLibre demo style as fallback. */
 const MAP_STYLE = MAPTILER_KEY

@@ -97,7 +97,7 @@ export default defineConfig({
     proxy: {
       // `ws: true` is required so that vite proxies WebSocket upgrade requests
       // for the /api/v1/geo/ws endpoint during development.
-      "/api": { target: "http://localhost:3000", changeOrigin: true, ws: true },
+      "/api": { target: "http://localhost:3001", changeOrigin: true, ws: true },
     },
   },
 });

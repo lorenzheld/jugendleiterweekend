@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-a24bf94b'], (function (workbox) { 'use strict';
+define(['./workbox-d488705a'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -81,7 +81,7 @@ define(['./workbox-a24bf94b'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "index.html",
-    "revision": "0.2jfskjlfaj8"
+    "revision": "0.ktv9fbo47no"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
@@ -89,7 +89,32 @@ define(['./workbox-a24bf94b'], (function (workbox) { 'use strict';
   }));
   workbox.registerRoute(/\/api\/v1\//, new workbox.NetworkFirst({
     "cacheName": "api-cache",
-    plugins: []
+    "networkTimeoutSeconds": 5,
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 100,
+      maxAgeSeconds: 300
+    })]
+  }), 'GET');
+  workbox.registerRoute(/\.(png|jpg|jpeg|svg|webp)$/, new workbox.CacheFirst({
+    "cacheName": "map-tiles-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 500,
+      maxAgeSeconds: 604800
+    })]
+  }), 'GET');
+  workbox.registerRoute(/\.(mp3|ogg|wav|m4a)$/, new workbox.CacheFirst({
+    "cacheName": "audio-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 200,
+      maxAgeSeconds: 2592000
+    })]
+  }), 'GET');
+  workbox.registerRoute(/\.(woff|woff2|ttf|eot)$/, new workbox.CacheFirst({
+    "cacheName": "fonts-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 30,
+      maxAgeSeconds: 31536000
+    })]
   }), 'GET');
 
 }));

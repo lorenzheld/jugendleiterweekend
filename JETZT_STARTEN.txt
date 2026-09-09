@@ -1,0 +1,93 @@
+===================================================================
+          PFAEFFIKON PROTOTYP - LOKALER TEST
+===================================================================
+
+
+SO STARTEST DU DEN PROTOTYP:
+===================================================================
+
+OPTION 1: PowerShell (EMPFOHLEN)
+-------------------------------------------------------------------
+
+   1. PowerShell oeffnen (Rechtsklick auf Start -> Windows PowerShell)
+   
+   2. Ins Projekt-Verzeichnis wechseln:
+      cd C:\Users\heldl\Projekte\jugendleiterweekend2026
+      
+   3. Script ausfuehren:
+      .\deploy-prototype.ps1
+
+
+OPTION 2: Batch-Datei (EINFACH)
+-------------------------------------------------------------------
+
+   Doppelklick auf:  deploy-prototype.bat
+
+
+OPTION 3: Manuell
+-------------------------------------------------------------------
+
+   docker compose -f docker-compose.prototype.yml up -d --build
+   timeout /t 15 /nobreak
+   docker compose -f docker-compose.prototype.yml exec backend-prototype npm run db:migrate
+   docker compose -f docker-compose.prototype.yml exec backend-prototype npm run seed:prototype
+
+
+===================================================================
+NACH DEM START:
+===================================================================
+
+Im Browser oeffnen:
+   -> http://localhost:5175
+
+Einloggen mit:
+   -> prototyp_player1 / test123
+
+Karte sollte zeigen:
+   -> Pfaeffikon ZH - Im Berg
+
+
+===================================================================
+PRUEFEN OB ES LAEUFT:
+===================================================================
+
+Backend Health Check:
+  http://localhost:3001/health
+  (sollte "OK" oder "healthy" anzeigen)
+
+Container-Status:
+  docker compose -f docker-compose.prototype.yml ps
+  (sollte 3 Container zeigen: postgres, backend, frontend)
+
+Test-Script ausfuehren:
+  .\test-prototype.ps1
+
+
+===================================================================
+STOPPEN:
+===================================================================
+
+docker compose -f docker-compose.prototype.yml down
+
+
+===================================================================
+WICHTIG:
+===================================================================
+
+[OK] Deine Rom-Datenbank (Port 5432) wird NICHT beruehrt!
+[OK] Prototyp laeuft auf separaten Ports (3001, 5175, 5433)
+[OK] Du kannst beide Systeme gleichzeitig laufen lassen
+
+
+===================================================================
+MEHR INFO:
+===================================================================
+
+-> README_PROTOTYPE.md       (Ausfuehrliche Anleitung)
+-> QUICKSTART_PROTOTYPE.md   (Schnellstart-Guide)
+-> docs/DEPLOYMENT_PROTOTYPE.md (Server-Deployment)
+
+
+===================================================================
+VIEL ERFOLG BEIM TESTEN!
+===================================================================
