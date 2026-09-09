@@ -348,7 +348,6 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
     quest_definition_id: string;
     state: string;
     started_at: Date;
-    accepted_at: Date | null;
     completed_at: Date | null;
     quest_title: string;
     quest_type: string;
@@ -359,7 +358,6 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
            qr.quest_definition_id,
            qr.state,
            qr.started_at,
-           qr.accepted_at,
            qr.completed_at,
            qd.title  AS quest_title,
            qd.type   AS quest_type,
@@ -380,7 +378,6 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
       quest_definition_id: string;
       state: string;
       started_at: Date;
-      accepted_at: Date | null;
       completed_at: Date | null;
       quest_title: string;
       quest_type: string;
@@ -394,7 +391,7 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
         questDefinitionId: r.quest_definition_id,
         state: r.state as "ACTIVE",
         startedAt: r.started_at,
-        acceptedAt: r.accepted_at,
+        acceptedAt: null, // ✅ FIX: Column doesn't exist in DB yet
         completedAt: r.completed_at,
         questTitle: r.quest_title,
         questType: r.quest_type,
@@ -425,7 +422,9 @@ export async function getAvailableQuests(
     .from(players)
     .where(eq(players.teamId, teamId));
 
-  if (teamPlayers.length === 0) return [];
+  if (teamPlayers.length === 0) {
+    return [];
+  }
 
   const playerIds = teamPlayers.map((p) => p.id);
 
@@ -443,7 +442,9 @@ export async function getAvailableQuests(
       ),
     );
 
-  if (proximityRows.length === 0) return [];
+  if (proximityRows.length === 0) {
+    return [];
+  }
 
   // Prefer INTERACTING over DISCOVERED if multiple team members see the same object
   const worldObjectZoneMap = new Map<string, string>();
@@ -465,7 +466,9 @@ export async function getAvailableQuests(
     .from(questStations)
     .where(inArray(questStations.worldObjectId, nearbyObjectIds));
 
-  if (stationRows.length === 0) return [];
+  if (stationRows.length === 0) {
+    return [];
+  }
 
   const questDefIds = [...new Set(stationRows.map((r) => r.questDefinitionId))];
 
@@ -484,7 +487,9 @@ export async function getAvailableQuests(
   const activeDefIds = new Set(activeRuns.map((r) => r.questDefinitionId));
   const availableIds = questDefIds.filter((id) => !activeDefIds.has(id));
 
-  if (availableIds.length === 0) return [];
+  if (availableIds.length === 0) {
+    return [];
+  }
 
   // Step 5: Load QuestDefinition rows
   const questDefs = await db
@@ -501,7 +506,7 @@ export async function getAvailableQuests(
   const worldObjectNameMap = new Map(worldObjectRows.map((r) => [r.id, r.name]));
 
   // Build result
-  return questDefs.map((qd): QuestAvailable => {
+  const result = questDefs.map((qd): QuestAvailable => {
     const trigger = stationRows.find((s) => s.questDefinitionId === qd.id)!;
     const zone = worldObjectZoneMap.get(trigger.worldObjectId) ?? "DISCOVERED";
 
@@ -516,6 +521,8 @@ export async function getAvailableQuests(
       triggerObjectName: worldObjectNameMap.get(trigger.worldObjectId) ?? "?",
     };
   });
+
+  return result;
 }
 
 // ── Public: acceptQuest ───────────────────────────────────────────────────────
@@ -1081,7 +1088,6 @@ export async function getSingleRun(
     quest_definition_id: string;
     state: string;
     started_at: Date;
-    accepted_at: Date | null;
     completed_at: Date | null;
     quest_title: string;
     quest_type: string;
@@ -1092,7 +1098,6 @@ export async function getSingleRun(
            qr.quest_definition_id,
            qr.state,
            qr.started_at,
-           qr.accepted_at,
            qr.completed_at,
            qd.title  AS quest_title,
            qd.type   AS quest_type,
@@ -1109,7 +1114,6 @@ export async function getSingleRun(
     quest_definition_id: string;
     state: string;
     started_at: Date;
-    accepted_at: Date | null;
     completed_at: Date | null;
     quest_title: string;
     quest_type: string;
@@ -1124,7 +1128,7 @@ export async function getSingleRun(
     questDefinitionId: row.quest_definition_id,
     state: row.state as "ACTIVE" | "PENDING_REVIEW" | "COMPLETED" | "FAILED",
     startedAt: row.started_at,
-    acceptedAt: row.accepted_at,
+    acceptedAt: null, // ✅ FIX: Column doesn't exist in DB yet
     completedAt: row.completed_at,
     questTitle: row.quest_title,
     questType: row.quest_type,
