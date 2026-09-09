@@ -1,5 +1,5 @@
 /**
- * Backend entry point – Fastify server.
+ * Backend entry point — Fastify server.
  */
 import Fastify from "fastify";
 import cors from "@fastify/cors";
