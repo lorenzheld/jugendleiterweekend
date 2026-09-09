@@ -12,6 +12,8 @@ build/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
 
 # Logs
 *.log
@@ -34,3 +36,18 @@ coverage/
 
 # Docker volumes (local)
 postgres_data/
+minio_data/
+
+# Backups
+backups/*.sql
+backups/*.sql.gz
+backups/*.dump
+
+# Certificates (if stored locally)
+*.pem
+*.key
+*.crt
+
+# Nginx logs (if stored locally)
+*.access.log
+*.error.log
