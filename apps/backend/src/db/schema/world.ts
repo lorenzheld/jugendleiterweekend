@@ -88,6 +88,8 @@ export const worldObjects = pgTable("world_object", {
   exitHysteresisRadiusM: integer("exit_hysteresis_radius_m").notNull().default(25),
   /** Enemy-only: aggro radius. Default 20 m. */
   aggroRadiusM: integer("aggro_radius_m").notNull().default(20),
+  /** Boss-only: join radius for teams to participate in world boss. Default 30 m. */
+  bossJoinRadiusM: integer("boss_join_radius_m").notNull().default(30),
 
   // ── Content lifecycle ─────────────────────────────────────────────────────
   contentStatus: contentStatusEnum("content_status")

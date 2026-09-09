@@ -11,10 +11,15 @@ import { authRoutes } from "./modules/auth/auth.routes.js";
 import { geoRoutes } from "./modules/geo/geo.routes.js";
 import { questRoutes } from "./modules/quest/quest.routes.js";
 import { combatRoutes } from "./modules/combat/combat.routes.js";
+import { bossRoutes } from "./modules/combat/boss.routes.js";
 import { economyRoutes } from "./modules/economy/economy.routes.js";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
 import { wsRoutes } from "./modules/ws/ws.routes.js";
+import { gmCommandsRoutes } from "./modules/gm/gm-commands.routes.js";
+import { eventLifecycleRoutes } from "./modules/gm/event-lifecycle.routes.js";
+import { gmDashboardRoutes } from "./modules/gm/gm-dashboard.routes.js";
+import { seedControlRoutes } from "./modules/gm/seed-control.routes.js";
 import { errorHandler } from "./plugins/error-handler.js";
 import { WsHub } from "./modules/ws/ws.hub.js";
 import { WsEventCleanup } from "./modules/ws/ws.cleanup.js";
@@ -97,10 +102,17 @@ await server.register(authRoutes, { prefix: "/api/v1/auth" });
 await server.register(geoRoutes, { prefix: "/api/v1/geo" });
 await server.register(questRoutes, { prefix: "/api/v1/quests" });
 await server.register(combatRoutes, { prefix: "/api/v1/combat" });
+await server.register(bossRoutes, { prefix: "/api/v1/boss" });
 await server.register(economyRoutes, { prefix: "/api/v1/economy" });
 await server.register(inventoryRoutes, { prefix: "/api/v1/inventory" });
 await server.register(mediaRoutes, { prefix: "/api/v1/media" });
 await server.register(wsRoutes, { prefix: "/api/v1/ws" });
+
+// GM Routes (Epic 9)
+await server.register(gmCommandsRoutes, { prefix: "/api/v1/gm" });
+await server.register(eventLifecycleRoutes, { prefix: "/api/v1/gm" });
+await server.register(gmDashboardRoutes, { prefix: "/api/v1/gm" });
+await server.register(seedControlRoutes, { prefix: "/api/v1/gm" });
 
 // ── Health check ──────────────────────────────────────────────────────────────
 server.get("/health", async () => ({ status: "ok" }));

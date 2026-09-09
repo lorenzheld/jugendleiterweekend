@@ -7,6 +7,7 @@ import {
   text,
   jsonb,
   varchar,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { teams } from "./player.js";
 import { questRuns } from "./quest.js";
@@ -50,6 +51,15 @@ export const reviewDecisions = pgTable("review_decision", {
     .defaultNow(),
 });
 
+export const gmCommandTypeEnum = pgEnum("gm_command_type", [
+  "QUEST_RESET",
+  "HP_OVERRIDE",
+  "LOCATION_OVERRIDE",
+  "CURRENCY_CORRECTION",
+  "ITEM_GRANT",
+  "EVENT_CONTROL",
+]);
+
 export const auditEvents = pgTable("audit_event", {
   id: uuid("id").primaryKey().defaultRandom(),
   actorId: uuid("actor_id")
@@ -59,6 +69,26 @@ export const auditEvents = pgTable("audit_event", {
   targetRefs: text("target_refs"),
   payload: jsonb("payload"),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const eventLifecycleStateEnum = pgEnum("event_lifecycle_state", [
+  "NOT_STARTED",
+  "ACTIVE",
+  "PAUSED",
+  "ENDED",
+]);
+
+export const eventState = pgTable("event_state", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  state: eventLifecycleStateEnum("state").notNull().default("NOT_STARTED"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  pausedAt: timestamp("paused_at", { withTimezone: true }),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  leaderboardFrozen: boolean("leaderboard_frozen").notNull().default(false),
+  metadata: jsonb("metadata"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });

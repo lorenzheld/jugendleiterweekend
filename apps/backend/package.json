@@ -17,6 +17,7 @@
     "seed": "tsx scripts/seed.ts",
     "seed:dev": "cross-env SEED_SKIP_FILTER=true tsx scripts/seed.ts",
     "test:epic5": "tsx scripts/test-epic5.ts",
+    "test:epic8": "tsx scripts/test-epic8.ts",
     "test:ws": "tsx scripts/test-websocket.ts"
   },
   "dependencies": {
@@ -29,11 +30,13 @@
     "fastify": "^4.28.1",
     "pg": "^8.12.0",
     "pino": "^9.3.2",
+    "uuid": "^9.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.14.14",
     "@types/pg": "^8.11.6",
+    "@types/uuid": "^9.0.8",
     "@types/ws": "^8.5.12",
     "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.10",

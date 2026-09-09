@@ -35,6 +35,7 @@ import type {
   PlayArea,
 } from "@jlw/contracts";
 import { startPvECombat, getActiveCombatForTeam } from "../combat/combat.service.js";
+import { getOrCreateBossCombat, joinBossCombat } from "../combat/boss.service.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ interface NearbyRow extends Record<string, unknown> {
   interaction_radius_m: number;
   exit_hysteresis_radius_m: number;
   aggro_radius_m: number;
+  boss_join_radius_m: number;
   actual_distance_m: string; // PostGIS returns numeric as string
 }
 
@@ -271,8 +273,25 @@ export async function updatePlayerLocation(opts: {
         nearbyObjects: nearbyAsSpatial,
         wsHub,
       });
+
+      // Check for BOSS_JOIN transitions and auto-join boss combat (Epic 8)
+      await checkBossJoinTrigger({
+        playerId: player.id,
+        teamId: player.teamId,
+        transitions: changed,
+        nearbyObjects: nearbyAsSpatial,
+        wsHub,
+      });
     } else {
       await checkPvEEncounterTrigger({
+        playerId: player.id,
+        teamId: player.teamId,
+        transitions: changed,
+        nearbyObjects: nearbyAsSpatial,
+      });
+
+      // Check for BOSS_JOIN transitions (no WebSocket)
+      await checkBossJoinTrigger({
         playerId: player.id,
         teamId: player.teamId,
         transitions: changed,
@@ -330,6 +349,7 @@ async function queryNearbyWorldObjects(opts: {
       wo.interaction_radius_m,
       wo.exit_hysteresis_radius_m,
       wo.aggro_radius_m,
+      wo.boss_join_radius_m,
       ST_DistanceSphere(
         wo.geom,
         ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
@@ -595,6 +615,66 @@ async function checkPvEEncounterTrigger(opts: {
         // Log error but don't throw - location update should still succeed
         console.error(`Failed to start PvE combat for team ${teamId}:`, err);
       }
+    }
+  }
+}
+
+// ── Boss Join Trigger (Epic 8) ────────────────────────────────────────────────
+
+/**
+ * Check if a player entering BOSS_JOIN zone should auto-join a world boss combat.
+ * Creates or joins a global boss instance.
+ */
+async function checkBossJoinTrigger(opts: {
+  playerId: string;
+  teamId: string;
+  transitions: Array<{
+    worldObjectId: string;
+    newZone: ProximityZone;
+    previousZone: ProximityZone;
+  }>;
+  nearbyObjects: Array<SpatialWorldObject & { actualDistanceM: number }>;
+  wsHub?: WsHub;
+}): Promise<void> {
+  const { playerId, teamId, transitions, nearbyObjects, wsHub } = opts;
+
+  // Find any BOSS_JOIN transitions for BOSS objects
+  const bossJoinTransitions = transitions.filter(
+    (t) =>
+      t.newZone === "BOSS_JOIN" &&
+      (t.previousZone === "OUTSIDE" ||
+        t.previousZone === "DISCOVERED")
+  );
+
+  if (bossJoinTransitions.length === 0) {
+    return;
+  }
+
+  // Process each boss join transition
+  for (const transition of bossJoinTransitions) {
+    const boss = nearbyObjects.find((o) => o.id === transition.worldObjectId);
+    if (!boss || boss.type !== "BOSS") continue;
+
+    try {
+      // Get or create the global boss combat instance
+      const combat = await getOrCreateBossCombat({
+        worldObjectId: boss.id,
+        ...(wsHub && { wsHub }),
+      });
+
+      // Join the team to the boss combat
+      await joinBossCombat({
+        combatId: combat.id,
+        teamId,
+        ...(wsHub && { wsHub }),
+      });
+
+      // Only join one boss at a time
+      return;
+    } catch (err) {
+      // Log error but don't throw - location update should still succeed
+      // Team might already be in the boss combat, which is fine
+      console.error(`Failed to join boss combat for team ${teamId}:`, err);
     }
   }
 }

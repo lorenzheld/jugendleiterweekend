@@ -13,3 +13,4 @@ export * from "./schemas/media.js";
 export * from "./schemas/geo.js";
 export * from "./schemas/geojson.js";
 export * from "./schemas/realtime.js";
+export * from "./schemas/gm.js";

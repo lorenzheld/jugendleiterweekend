@@ -154,3 +154,61 @@ export const TeamWipedEventSchema = z.object({
   }),
 });
 export type TeamWipedEvent = z.infer<typeof TeamWipedEventSchema>;
+
+// ── World Boss Schemas ────────────────────────────────────────────────────────
+
+export const BossJoinRequestBodySchema = z.object({
+  worldObjectId: z.string().uuid(),
+  playerId: z.string().uuid(),
+});
+export type BossJoinRequestBody = z.infer<typeof BossJoinRequestBodySchema>;
+
+export const BossGlobalActionBodySchema = z.object({
+  actionType: z.enum(["APPLAUD", "CHEER", "COORDINATED_ATTACK"]),
+  teamId: z.string().uuid(),
+});
+export type BossGlobalActionBody = z.infer<typeof BossGlobalActionBodySchema>;
+
+export const BossCombatStatusSchema = z.object({
+  combatId: z.string().uuid(),
+  bossName: z.string(),
+  bossHpCurrent: z.number(),
+  bossHpMax: z.number(),
+  participatingTeams: z.number(),
+  roundNumber: z.number(),
+  state: CombatStateSchema,
+});
+export type BossCombatStatus = z.infer<typeof BossCombatStatusSchema>;
+
+// ── Boss WebSocket Events ─────────────────────────────────────────────────────
+
+export const BossJoinedEventSchema = z.object({
+  event: z.literal("boss:team_joined"),
+  data: z.object({
+    combatId: z.string().uuid(),
+    teamId: z.string().uuid(),
+    teamCount: z.number(),
+  }),
+});
+export type BossJoinedEvent = z.infer<typeof BossJoinedEventSchema>;
+
+export const BossHealthUpdatedEventSchema = z.object({
+  event: z.literal("boss:health_updated"),
+  data: z.object({
+    combatId: z.string().uuid(),
+    hpCurrent: z.number(),
+    hpMax: z.number(),
+    percentRemaining: z.number(),
+  }),
+});
+export type BossHealthUpdatedEvent = z.infer<typeof BossHealthUpdatedEventSchema>;
+
+export const BossDefeatedEventSchema = z.object({
+  event: z.literal("boss:defeated"),
+  data: z.object({
+    combatId: z.string().uuid(),
+    bossName: z.string(),
+    participatingTeams: z.array(z.string().uuid()),
+  }),
+});
+export type BossDefeatedEvent = z.infer<typeof BossDefeatedEventSchema>;
