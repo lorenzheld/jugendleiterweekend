@@ -348,6 +348,7 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
     quest_definition_id: string;
     state: string;
     started_at: Date;
+    accepted_at: Date | null;
     completed_at: Date | null;
     quest_title: string;
     quest_type: string;
@@ -358,6 +359,7 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
            qr.quest_definition_id,
            qr.state,
            qr.started_at,
+           qr.accepted_at,
            qr.completed_at,
            qd.title  AS quest_title,
            qd.type   AS quest_type,
@@ -378,6 +380,7 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
       quest_definition_id: string;
       state: string;
       started_at: Date;
+      accepted_at: Date | null;
       completed_at: Date | null;
       quest_title: string;
       quest_type: string;
@@ -391,6 +394,7 @@ export async function getActiveRuns(teamId: string): Promise<QuestRunDetail[]> {
         questDefinitionId: r.quest_definition_id,
         state: r.state as "ACTIVE",
         startedAt: r.started_at,
+        acceptedAt: r.accepted_at,
         completedAt: r.completed_at,
         questTitle: r.quest_title,
         questType: r.quest_type,
@@ -1077,6 +1081,7 @@ export async function getSingleRun(
     quest_definition_id: string;
     state: string;
     started_at: Date;
+    accepted_at: Date | null;
     completed_at: Date | null;
     quest_title: string;
     quest_type: string;
@@ -1087,6 +1092,7 @@ export async function getSingleRun(
            qr.quest_definition_id,
            qr.state,
            qr.started_at,
+           qr.accepted_at,
            qr.completed_at,
            qd.title  AS quest_title,
            qd.type   AS quest_type,
@@ -1103,6 +1109,7 @@ export async function getSingleRun(
     quest_definition_id: string;
     state: string;
     started_at: Date;
+    accepted_at: Date | null;
     completed_at: Date | null;
     quest_title: string;
     quest_type: string;
@@ -1117,6 +1124,7 @@ export async function getSingleRun(
     questDefinitionId: row.quest_definition_id,
     state: row.state as "ACTIVE" | "PENDING_REVIEW" | "COMPLETED" | "FAILED",
     startedAt: row.started_at,
+    acceptedAt: row.accepted_at,
     completedAt: row.completed_at,
     questTitle: row.quest_title,
     questType: row.quest_type,

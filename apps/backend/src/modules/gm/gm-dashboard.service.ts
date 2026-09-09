@@ -129,7 +129,7 @@ export class GMDashboardService {
         fame: Number(fameResult[0]?.total ?? 0),
         denarii: Number(denariiResult[0]?.total ?? 0),
         activeQuestCount: Number(activeQuestResult[0]?.count ?? 0),
-        isActive: team.isActive,
+        isActive: team.isActive === 1,
       });
     }
 
@@ -208,6 +208,11 @@ export class GMDashboardService {
       .from(accounts)
       .where(eq(accounts.id, player.accountId))
       .limit(1);
+
+    // Skip players without location data
+    if (player.lastLat === null || player.lastLng === null) {
+      return null;
+    }
 
     return {
       playerId: player.playerId,

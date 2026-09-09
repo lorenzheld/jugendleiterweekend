@@ -5,6 +5,7 @@ import {
   integer,
   pgEnum,
   doublePrecision,
+  timestamp,
 } from "drizzle-orm/pg-core";
 import { accounts } from "./account.js";
 
@@ -22,6 +23,10 @@ export const teams = pgTable("team", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 64 }).notNull().unique(),
   inventoryCapacity: integer("inventory_capacity").notNull().default(40),
+  // Epic 9: Team-wide HP (sum of all player HP)
+  hp: integer("hp").notNull().default(400), // 4 players × 100 HP
+  // Epic 9: Team active status
+  isActive: integer("is_active").notNull().default(1), // 1 = active, 0 = inactive
 });
 
 export const players = pgTable("player", {
@@ -38,4 +43,8 @@ export const players = pgTable("player", {
   // PostGIS point stored as raw lat/lng for initial Epic 2; migrate to geometry later.
   lastLat: doublePrecision("last_lat"),
   lastLng: doublePrecision("last_lng"),
+  // Epic 9: Track when player location was last updated
+  lastLocationUpdate: timestamp("last_location_update", { withTimezone: true }),
+  // Epic 9: Player display name (denormalized from account)
+  playerName: varchar("player_name", { length: 64 }),
 });

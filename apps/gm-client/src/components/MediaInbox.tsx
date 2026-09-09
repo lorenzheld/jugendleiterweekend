@@ -65,11 +65,18 @@ export function MediaInbox() {
 
   const handleReview = () => {
     if (!selectedSubmission) return;
-    reviewMutation.mutate({
+    const payload: {
+      submissionId: string;
+      score: number;
+      reason?: string;
+    } = {
       submissionId: selectedSubmission.id,
       score,
-      reason: reason || undefined,
-    });
+    };
+    if (reason) {
+      payload.reason = reason;
+    }
+    reviewMutation.mutate(payload);
   };
 
   if (isLoading) {

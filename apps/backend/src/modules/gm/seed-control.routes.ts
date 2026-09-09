@@ -11,7 +11,7 @@ export const seedControlRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── POST /api/v1/gm/seed/trigger ────────────────────────────────────────────
   fastify.post("/seed/trigger", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
 
     const report = await service.triggerReSeed(actorId);
 

@@ -110,6 +110,8 @@ export const questRuns = pgTable("quest_run", {
   startedAt: timestamp("started_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  /** Epic 9: When the quest was accepted (for QUEST_RESET functionality) */
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
   /** Set when state transitions to COMPLETED or FAILED. */
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });

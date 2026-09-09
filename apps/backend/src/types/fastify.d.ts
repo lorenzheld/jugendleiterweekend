@@ -13,3 +13,27 @@ declare module "fastify" {
     wsHub: WsHub;
   }
 }
+
+/**
+ * Augment @fastify/jwt types with our JWT payload structure
+ */
+declare module "@fastify/jwt" {
+  interface FastifyJWT {
+    payload: {
+      accountId?: string;
+      playerId?: string;
+      sub?: string; // Legacy/alternative support
+      teamId?: string; // For some routes
+      role?: string; // For auth
+      username?: string; // For auth
+    };
+    user: {
+      accountId?: string;
+      playerId?: string;
+      sub?: string; // Legacy/alternative support
+      teamId?: string; // For some routes
+      role?: string; // For auth
+      username?: string; // For auth
+    };
+  }
+}

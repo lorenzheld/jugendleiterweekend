@@ -18,28 +18,28 @@ export const eventLifecycleRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── POST /api/v1/gm/event/start ─────────────────────────────────────────────
   fastify.post("/event/start", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const state = await service.startEvent(actorId);
     return reply.send(state);
   });
 
   // ── POST /api/v1/gm/event/pause ─────────────────────────────────────────────
   fastify.post("/event/pause", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const state = await service.pauseEvent(actorId);
     return reply.send(state);
   });
 
   // ── POST /api/v1/gm/event/resume ────────────────────────────────────────────
   fastify.post("/event/resume", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const state = await service.resumeEvent(actorId);
     return reply.send(state);
   });
 
   // ── POST /api/v1/gm/event/end ───────────────────────────────────────────────
   fastify.post("/event/end", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const state = await service.endEvent(actorId);
     return reply.send(state);
   });
@@ -58,7 +58,7 @@ export const eventLifecycleRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── POST /api/v1/gm/event/leaderboard-freeze ────────────────────────────────
   fastify.post("/event/leaderboard-freeze", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const { freeze } = ToggleLeaderboardFreezeBodySchema.parse(request.body);
 
     const state = await service.toggleLeaderboardFreeze(actorId, freeze);

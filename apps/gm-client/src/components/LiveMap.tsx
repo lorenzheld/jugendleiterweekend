@@ -5,7 +5,7 @@
 
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type Map from "maplibre-gl";
+import type { Map } from "maplibre-gl";
 import type { PlayerPosition, WorldObjectMarker } from "@jlw/contracts";
 import "maplibre-gl/dist/maplibre-gl.css";
 

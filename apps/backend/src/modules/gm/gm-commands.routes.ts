@@ -17,7 +17,7 @@ export const gmCommandsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── POST /api/v1/gm/commands/quest-reset ────────────────────────────────────
   fastify.post("/commands/quest-reset", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const { questRunId } = ResetQuestBodySchema.parse(request.body);
 
     const result = await service.resetQuest(actorId, questRunId);
@@ -26,7 +26,7 @@ export const gmCommandsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── POST /api/v1/gm/commands/hp-override ────────────────────────────────────
   fastify.post("/commands/hp-override", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const { teamId, newHP } = OverrideHPBodySchema.parse(request.body);
 
     const result = await service.overrideHP(actorId, teamId, newHP);
@@ -35,7 +35,7 @@ export const gmCommandsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── POST /api/v1/gm/commands/location-override ──────────────────────────────
   fastify.post("/commands/location-override", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const { playerId, lat, lng } = OverrideLocationBodySchema.parse(request.body);
 
     const result = await service.overrideLocation(actorId, playerId, lat, lng);
@@ -44,7 +44,7 @@ export const gmCommandsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── POST /api/v1/gm/commands/currency-correction ────────────────────────────
   fastify.post("/commands/currency-correction", async (request, reply) => {
-    const actorId = request.user.accountId;
+    const actorId = request.user.accountId!;
     const { teamId, currencyType, amount, reason } =
       CorrectCurrencyBodySchema.parse(request.body);
 
@@ -82,12 +82,13 @@ export const gmCommandsRoutes: FastifyPluginAsync = async (fastify) => {
         action?: string;
       };
 
-      const logs = await service.getAuditLog({
-        limit,
-        offset,
-        actorId,
-        action: action as any,
-      });
+      const params: Parameters<typeof service.getAuditLog>[0] = {};
+      if (limit !== undefined) params.limit = limit;
+      if (offset !== undefined) params.offset = offset;
+      if (actorId !== undefined) params.actorId = actorId;
+      if (action !== undefined) params.action = action as any;
+
+      const logs = await service.getAuditLog(params);
 
       return reply.send(logs);
     },

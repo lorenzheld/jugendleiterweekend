@@ -327,7 +327,7 @@ export class EventLifecycleService {
     const leaderboard = await this.getLeaderboard();
 
     const allTeams = await db.select().from(teams);
-    const activeTeams = allTeams.filter((t) => t.isActive).length;
+    const activeTeams = allTeams.filter((t) => t.isActive === 1).length;
 
     const totalQuestsCompleted = await db
       .select({ count: sql<number>`COUNT(*)` })
