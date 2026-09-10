@@ -33,13 +33,16 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY packages/contracts/package.json ./packages/contracts/
 COPY apps/backend/package.json ./apps/backend/
 
-RUN pnpm install --frozen-lockfile --prod
+# Install ALL dependencies (including tsx for runtime)
+RUN pnpm install --frozen-lockfile
 
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder /app/packages/contracts/src ./packages/contracts/src
+COPY --from=builder /app/packages/contracts ./packages/contracts
+COPY tsconfig.base.json ./
 
 WORKDIR /app/apps/backend
 
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+# Use tsx in production to handle TypeScript imports
+CMD ["pnpm", "exec", "tsx", "dist/index.js"]
