@@ -334,7 +334,7 @@ async function queryNearbyWorldObjects(opts: {
   // Expand the search radius by the player's GPS accuracy to ensure we don't
   // miss objects at the boundary. Cap the expansion at 100 m to avoid pulling
   // in half of Rome on bad GPS days.
-  const accuracyBuffer = Math.min(accuracy, 100);
+  const accuracyBuffer = Math.ceil(Math.min(accuracy, 100));
 
   // In development/playtest mode, also include non-publishable objects so that
   // prototype content (which ships with publishable=false) is discoverable
