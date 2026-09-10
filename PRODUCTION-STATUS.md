@@ -32,9 +32,9 @@
 - [x] **Respawn-Script** (`~/respawn-team.sh`)
 
 ### Getestete Accounts
-- `prototyp_player1` / `spieler1` (Team: Pfäffikon Test Team)
-- `prototyp_player2` / `spieler2` (Team: Pfäffikon Test Team)  
-- `prototyp_gm` (GM, kein Passwort)
+- **Team 1**: `prototyp_player1` / Access Code: `test123` (GARDIST, Pfäffikon Test Team)
+- **Team 2**: `prototyp_player2` / Access Code: `team2code` (SPÄHER, Test Team 2)
+- **GM**: `prototyp_gm` (kein Passwort nötig)
 
 ---
 
@@ -47,7 +47,6 @@
 - [ ] **Media Upload** (nice-to-have)
 - [ ] **Puzzle/Questions** (falls nicht kern-gameplay)
 - [ ] **Team Wipe & Auto-Respawn** (manuell via Script möglich)
-- [ ] **Mehrere Teams gleichzeitig** (Race Conditions möglich)
 
 ### Bekannte Limitationen:
 - **Respawn**: Nur manuell via `~/respawn-team.sh <TEAM_ID>`
@@ -95,7 +94,8 @@ docker compose -f ~/jlw2026/docker-compose.production.yml logs -f backend
 ## 📍 WICHTIGE IDs & DATEN
 
 ### Team IDs
-- **Pfäffikon Test Team**: `f47ac10b-58cc-4372-a567-0e02b2c3d479`
+- **Team 1 (Pfäffikon Test Team)**: `f47ac10b-58cc-4372-a567-0e02b2c3d479`
+- **Team 2 (Test Team 2)**: `2b9e3b4a-1234-5678-9abc-def012345678`
 
 ### URLs
 - **Frontend**: https://jlw2026.lorenzheld.ch
