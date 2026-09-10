@@ -3,15 +3,15 @@
  */
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { db } from "../../db/client.js";
+import { players } from "../../db/schema/player.js";
+import { eq } from "drizzle-orm";
 import {
   getCombatInstance,
   submitCombatAction,
   lockAndResolveRound,
   getActiveCombatForTeam,
 } from "./combat.service.js";
-import { db } from "../../db/client.js";
-import { players } from "../../db/schema/player.js";
-import { eq } from "drizzle-orm";
 
 const submitActionSchema = z.object({
   actionType: z.enum(["ATTACK", "DEFEND", "SKILL", "FLEE"]),
@@ -47,19 +47,20 @@ export async function combatRoutes(server: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { sub: accountId } = request.user as { sub: string };
-      
+
       // Resolve teamId from accountId
       const [player] = await db
         .select({ teamId: players.teamId })
         .from(players)
         .where(eq(players.accountId, accountId));
-      
+
       if (!player) {
         return reply.status(404).send({ error: "Player not found" });
       }
+      const { teamId } = player;
 
       try {
-        const combat = await getActiveCombatForTeam(player.teamId);
+        const combat = await getActiveCombatForTeam(teamId);
         if (!combat) {
           return reply.status(404).send({ error: "No active combat" });
         }
@@ -78,8 +79,20 @@ export async function combatRoutes(server: FastifyInstance): Promise<void> {
       preHandler: [server.authenticate],
     },
     async (request, reply) => {
+      const { sub: accountId } = request.user as { sub: string };
+
+      // Resolve playerId from accountId
+      const [player] = await db
+        .select({ id: players.id })
+        .from(players)
+        .where(eq(players.accountId, accountId));
+
+      if (!player) {
+        return reply.status(404).send({ error: "Player not found" });
+      }
+      const playerId = player.id;
+
       const { id } = request.params as { id: string };
-      const { playerId } = request.user as { playerId: string };
 
       try {
         const body = submitActionSchema.parse(request.body);
@@ -92,69 +105,35 @@ export async function combatRoutes(server: FastifyInstance): Promise<void> {
           idempotencyKey: body.idempotencyKey,
         });
 
-        // Emit WS event to team
-        const combat = await getCombatInstance(id);
-        const playerCombatant = combat.combatants.find(
-          (c) => c.entityId === playerId
-        );
-
-        if (playerCombatant?.teamId && server.wsHub) {
-          server.wsHub.sendToTeam(playerCombatant.teamId, {
-            event: "combat:action_submitted",
-            data: { combatId: id, action },
-          });
-        }
-
         return reply.send(action);
       } catch (err) {
         server.log.error(err);
-        if (err instanceof z.ZodError) {
-          return reply.status(400).send({ error: "Invalid request", details: err.errors });
-        }
-        return reply.status(400).send({ error: (err as Error).message });
+        return reply.status(400).send({ error: "Invalid action" });
       }
     }
   );
 
-  /** POST /api/v1/combat/:id/resolve – manually resolve round (for testing/GM) */
+  /** POST /api/v1/combat/:id/lock – manually lock and resolve round (GM only) */
   server.post(
-    "/:id/resolve",
+    "/:id/lock",
     {
       preHandler: [server.authenticate],
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
+      const { role } = request.user as { role: string };
+
+      if (role !== "GM") {
+        return reply.status(403).send({ error: "Forbidden" });
+      }
 
       try {
-        const logs = await lockAndResolveRound(id, server.wsHub);
+        const logs = await lockAndResolveRound(id);
         return reply.send({ logs });
       } catch (err) {
         server.log.error(err);
-        return reply.status(400).send({ error: (err as Error).message });
+        return reply.status(500).send({ error: "Failed to lock round" });
       }
     }
   );
-
-  /** WebSocket /api/v1/combat/:id/ws – live combat events */
-  server.get("/:id/ws", { websocket: true }, (socket, request) => {
-    const { id } = request.params as { id: string };
-
-    server.log.info(`WebSocket connected for combat ${id}`);
-
-    socket.on("message", (message: unknown) => {
-      server.log.debug(`Combat WS message: ${message}`);
-    });
-
-    socket.on("close", () => {
-      server.log.info(`WebSocket closed for combat ${id}`);
-    });
-
-    // Send initial connection confirmation
-    socket.send(
-      JSON.stringify({
-        event: "combat:connected",
-        data: { combatId: id },
-      })
-    );
-  });
 }
