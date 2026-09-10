@@ -5,12 +5,15 @@
 
 -- ── Event Lifecycle State ─────────────────────────────────────────────────────
 
-CREATE TYPE event_lifecycle_state AS ENUM (
-  'NOT_STARTED',
-  'ACTIVE',
-  'PAUSED',
-  'ENDED'
-);
+DO $$ BEGIN
+  CREATE TYPE event_lifecycle_state AS ENUM (
+    'NOT_STARTED',
+    'ACTIVE',
+    'PAUSED',
+    'ENDED'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS event_state (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

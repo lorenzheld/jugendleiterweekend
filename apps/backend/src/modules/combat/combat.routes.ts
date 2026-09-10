@@ -9,6 +9,9 @@ import {
   lockAndResolveRound,
   getActiveCombatForTeam,
 } from "./combat.service.js";
+import { db } from "../../db/client.js";
+import { players } from "../../db/schema/player.js";
+import { eq } from "drizzle-orm";
 
 const submitActionSchema = z.object({
   actionType: z.enum(["ATTACK", "DEFEND", "SKILL", "FLEE"]),
@@ -43,10 +46,20 @@ export async function combatRoutes(server: FastifyInstance): Promise<void> {
       preHandler: [server.authenticate],
     },
     async (request, reply) => {
-      const { teamId } = request.user as { teamId: string };
+      const { sub: accountId } = request.user as { sub: string };
+      
+      // Resolve teamId from accountId
+      const [player] = await db
+        .select({ teamId: players.teamId })
+        .from(players)
+        .where(eq(players.accountId, accountId));
+      
+      if (!player) {
+        return reply.status(404).send({ error: "Player not found" });
+      }
 
       try {
-        const combat = await getActiveCombatForTeam(teamId);
+        const combat = await getActiveCombatForTeam(player.teamId);
         if (!combat) {
           return reply.status(404).send({ error: "No active combat" });
         }

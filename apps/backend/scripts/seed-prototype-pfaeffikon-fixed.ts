@@ -198,6 +198,8 @@ async function seedPrototype() {
           `proto-${loaded}`
         ) as string;
 
+        const insertedId = externalId;
+        
         await db.insert(worldObjects)
           .values({
             externalId,
@@ -205,6 +207,7 @@ async function seedPrototype() {
             name:               (props['name'] as string) || 'Unnamed Location',
             lat,
             lng,
+            // geom will be set via raw SQL below
             interactionRadiusM: (props['standard_interaction_radius_m'] as number) || (props['interaction_radius_m'] as number) || 15,
             exitRadiusM:        (props['exit_radius_m'] as number) || 25,
             discoveryRadiusM:   (props['discovery_radius_m'] as number) || 55,
@@ -219,8 +222,18 @@ async function seedPrototype() {
               lat,
               lng,
               publishable: true, // Ensure upgrade from false → true on re-run
+              // ✅ FIX: Update PostGIS geom column so WorldObjects are discoverable
+              geom:        sql`ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)`,
             },
           });
+
+        // ✅ FIX: Set geom via raw SQL (Drizzle .values() doesn't support sql`` templates well)
+        await db.execute(sql`
+          UPDATE world_object
+          SET geom = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
+          WHERE external_id = ${insertedId}
+            AND geom IS NULL
+        `);
 
         loaded++;
         console.log(`  ✓ ${(props['name'] as string) || externalId} (${objectType})`);

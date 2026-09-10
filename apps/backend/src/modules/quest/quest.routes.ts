@@ -89,8 +89,14 @@ export async function questRoutes(server: FastifyInstance): Promise<void> {
     { onRequest: [server.authenticate] },
     async (request, reply) => {
       const { sub: accountId } = request.user as { sub: string };
+      request.log.info({ accountId }, 'GET /available - accountId from JWT');
+      
       const teamId = await resolveTeamId(accountId);
+      request.log.info({ teamId }, 'GET /available - resolved teamId');
+      
       const quests = await getAvailableQuests(teamId);
+      request.log.info({ questCount: quests.length, quests }, 'GET /available - quests from service');
+      
       return reply.send({ quests });
     },
   );
